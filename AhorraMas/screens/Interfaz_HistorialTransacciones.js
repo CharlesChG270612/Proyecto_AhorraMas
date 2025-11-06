@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from "react-native";
-import App from "../App";
+import Interfaz_Inicio from "./Interfaz_Inicio";
 
 const transacciones = [
   { id: "1", nombre: "Netflix", categoria: "Entretenimiento", monto: "- $10", imagen: require("../assets/iconos/netflix.png"), fecha: "01 Nov 2025" },
@@ -18,7 +18,7 @@ const transacciones = [
 export default function Interfaz_HistorialTransacciones() {
   const [mostrarApp, setMostrarApp] = useState(false);
   if (mostrarApp) {
-    return <App />;
+    return <Interfaz_Inicio />;
   }
 
   const renderTransaccion = ({ item }) => (

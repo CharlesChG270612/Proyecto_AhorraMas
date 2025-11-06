@@ -12,10 +12,10 @@ import {
   Image,
 } from 'react-native';
 import Interfaz_Registrarse from './screens/Interfaz_Registrarse';
+import Interfaz_Inicio from './screens/Interfaz_Inicio';
 
 export default function App() {
-
-  const [pantalla, setPantalla] = useState(false);
+  const [pantalla, setPantalla] = useState('login'); // 👈 controla qué pantalla se muestra
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
 
@@ -26,12 +26,19 @@ export default function App() {
     }
 
     Alert.alert('Inicio de Sesión', `Bienvenido, ${usuario}`);
+    setPantalla('inicio'); // 👈 aquí cambia a la pantalla de inicio
   };
 
-  if (pantalla) {
-    return <Interfaz_Registrarse volverAlLogin={() => setPantalla(false)} />;
+  // 👇 Renderizado condicional de pantallas
+  if (pantalla === 'registro') {
+    return <Interfaz_Registrarse volverAlLogin={() => setPantalla('login')} />;
   }
 
+  if (pantalla === 'inicio') {
+    return <Interfaz_Inicio cerrarSesion={() => setPantalla('login')} />;
+  }
+
+  // 👇 Pantalla de login
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -87,7 +94,7 @@ export default function App() {
               styles.loginLink,
               { opacity: pressed ? 0.6 : 1.0 },
             ]}
-            onPress={() => setPantalla(true)}
+            onPress={() => setPantalla('registro')}
           >
             <Text style={styles.loginLinkText}>
               ¿No tienes cuenta? Regístrate aquí

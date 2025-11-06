@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native"
-import Interfaz_HistorialTransacciones from './screens/Interfaz_HistorialTransacciones'
-import Interfaz_Grafica from './screens/Interfaz_Grafica'
-import Interfaz_PresupuestosGastos from './screens/Interfaz_PresupuestosGastos'
-import Interfaz_Movimientos from './screens/Interfaz_Movimientos'
+import Interfaz_HistorialTransacciones from './Interfaz_HistorialTransacciones'
+import Interfaz_Grafica from './Interfaz_Grafica'
+import Interfaz_PresupuestosGastos from './Interfaz_PresupuestosGastos'
+import Interfaz_Movimientos from './Interfaz_Movimientos'
 
 
 export default function Interfaz_Inicio() {
@@ -41,28 +41,28 @@ export default function Interfaz_Inicio() {
       <View style={estilos.contenedorOpciones}>
         <TouchableOpacity style={estilos.opcion} onPress={() => setPantalla("historial")}>
           <View style={[estilos.cajaIcono, { backgroundColor: "#6c63ff1a" }]}>
-            <Image source={require("./assets/iconos/historial-de-transacciones.png")} style={estilos.icono} />
+            <Image source={require("../assets/iconos/historial-de-transacciones.png")} style={estilos.icono} />
           </View>
           <Text style={estilos.textoOpcion}>Historial de{"\n"}transacciones</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={estilos.opcion} onPress={() => setPantalla("presupuestos")}>
           <View style={[estilos.cajaIcono, { backgroundColor: "#ff98001a" }]}>
-            <Image source={require("./assets/iconos/presupuesto.png")} style={estilos.icono} />
+            <Image source={require("../assets/iconos/presupuesto.png")} style={estilos.icono} />
           </View>
           <Text style={estilos.textoOpcion}>Presupuestos{"\n"}de gastos</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={estilos.opcion} onPress={() => setPantalla("grafica")}>
           <View style={[estilos.cajaIcono, { backgroundColor: "#4caf501a" }]}>
-            <Image source={require("./assets/iconos/graficas.png")} style={estilos.icono} />
+            <Image source={require("../assets/iconos/graficas.png")} style={estilos.icono} />
           </View>
           <Text style={estilos.textoOpcion}>Gráfica</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={estilos.opcion} onPress={() => setPantalla("movimientos")}>
           <View style={[estilos.cajaIcono, { backgroundColor: "#e83b631a" }]}>
-            <Image source={require("./assets/iconos/movimientos.png")} style={estilos.icono} />
+            <Image source={require("../assets/iconos/movimientos.png")} style={estilos.icono} />
           </View>
           <Text style={estilos.textoOpcion}>Movimientos</Text>
         </TouchableOpacity>
@@ -70,17 +70,17 @@ export default function Interfaz_Inicio() {
 
       <View style={estilos.barraInferior}>
         <TouchableOpacity style={estilos.iconoActivo}>
-          <Image source={require("./assets/iconos/inicio.png")} style={estilos.iconoBarra} />
+          <Image source={require("../assets/iconos/inicio.png")} style={estilos.iconoBarra} />
           <Text style={estilos.textoActivo}>Inicio</Text>
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("./assets/iconos/buscar.png")} style={estilos.iconoBarra} />
+          <Image source={require("../assets/iconos/buscar.png")} style={estilos.iconoBarra} />
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("./assets/iconos/notificaciones.png")} style={estilos.iconoBarra} />
+          <Image source={require("../assets/iconos/notificaciones.png")} style={estilos.iconoBarra} />
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("./assets/iconos/configuraciones.png")} style={estilos.iconoBarra} />
+          <Image source={require("../assets/iconos/configuraciones.png")} style={estilos.iconoBarra} />
         </TouchableOpacity>
       </View>
     </ScrollView>

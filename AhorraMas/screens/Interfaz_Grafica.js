@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image
 } from 'react-native';
-import App from "../App";
+import Interfaz_Inicio from "./Interfaz_Inicio";
 
 export default function Interfaz_Grafica() {
   // Datos para el gráfico de gastos mensual
@@ -24,7 +24,7 @@ export default function Interfaz_Grafica() {
   const maxAmount = 600;
 const [mostrarApp, setMostrarApp] = useState(false);
   if (mostrarApp) {
-    return <App />;
+    return <Interfaz_Inicio />;
   }
 
   return (

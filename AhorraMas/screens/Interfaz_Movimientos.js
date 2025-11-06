@@ -8,12 +8,12 @@ import {
   Image,
 } from "react-native";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import App from "../App";
+import Interfaz_Inicio from "./Interfaz_Inicio";
 
 export default function Interfaz_Movimientos() {
   const [mostrarApp, setMostrarApp] = useState(false);
   if (mostrarApp) {
-    return <App />;
+    return <Interfaz_Inicio />;
   }
 
   return (

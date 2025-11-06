@@ -1,10 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import Interfaz_PresupuestosGastos from "./Interfaz_PresupuestosGastos";
+import Interfaz_Inicio from "./Interfaz_Inicio";
 
 export default function Interfaz_PresupuestoGuardado() {
+    const [guardado, setMostrarGuardado] = useState(false);
+    const [pantalla, setPantalla] = useState(false);
+
+      if (guardado) {
+            return <Interfaz_PresupuestosGastos />;
+          }
+      if (pantalla) {
+            return <Interfaz_Inicio />;
+          }
   return (
     <View style={styles.container}>
-    
       <View style={styles.content}>
         <Text style={styles.title}>Presupuesto guardado</Text>
 
@@ -20,37 +30,38 @@ export default function Interfaz_PresupuestoGuardado() {
           ¡Ya tienes un presupuesto para el servicio!
         </Text>
 
-        <View style={styles.button}>
+        {/* Botón que devuelve a la pantalla principal */}
+        <TouchableOpacity style={styles.button} onPress={() => setMostrarGuardado(true)}>
           <Text style={styles.buttonText}>Confirmar</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
-      
+      {/* Barra inferior */}
       <View style={styles.barraInferior}>
-        <TouchableOpacity style={styles.botonIcono}>
+        <TouchableOpacity style={styles.botonIcono} onPress={() => setPantalla(true)}>
           <Image
-            source={require("./assets/iconos/inicio.png")}
+            source={require("../assets/iconos/inicio.png")}
             style={styles.iconoBarra}
           />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.botonIcono}>
           <Image
-            source={require("./assets/iconos/buscar.png")}
+            source={require("../assets/iconos/buscar.png")}
             style={styles.iconoBarra}
           />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.botonIcono}>
           <Image
-            source={require("./assets/iconos/notificaciones.png")}
+            source={require("../assets/iconos/notificaciones.png")}
             style={styles.iconoBarra}
           />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.botonIcono}>
           <Image
-            source={require("./assets/iconos/configuraciones.png")}
+            source={require("../assets/iconos/configuraciones.png")}
             style={styles.iconoBarra}
           />
         </TouchableOpacity>
@@ -60,23 +71,20 @@ export default function Interfaz_PresupuestoGuardado() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
   content: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
     paddingTop: 60,
-    paddingBottom: 90, 
+    paddingBottom: 90,
   },
   title: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#000",
-    alignSelf: "flex-start",
+    textAlign: "center", // 🔹 centrado
     marginBottom: 40,
   },
   image: {
@@ -103,13 +111,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     alignItems: "center",
   },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
+  buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 
-  
   barraInferior: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -124,13 +127,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowRadius: 4,
   },
-  botonIcono: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconoBarra: {
-    width: 30,
-    height: 30,
-    resizeMode: "contain",
-  },
+  botonIcono: { alignItems: "center", justifyContent: "center" },
+  iconoBarra: { width: 30, height: 30, resizeMode: "contain" },
 });

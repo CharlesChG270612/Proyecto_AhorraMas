@@ -19,18 +19,30 @@ export default function Interfaz_Registrarse({ volverAlLogin }) {
   const [password, setPassword] = useState('');
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
+  const validarEmail = (correo) => {
+    // Expresión regular para validar formato de correo electrónico
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(correo);
+  };
+
   const handleRegistro = () => {
     if (nombreCompleto.trim() === '' || email.trim() === '' || password.trim() === '') {
       Alert.alert('Error', 'Por favor completa todos los campos.');
       return;
     }
+
+    // Validar formato del correo
+    if (!validarEmail(email)) {
+      Alert.alert('Correo inválido', 'Por favor ingresa un correo electrónico válido.');
+      return;
+    }
+
     if (!aceptaTerminos) {
       Alert.alert('Aviso', 'Debes aceptar los términos y condiciones.');
       return;
     }
 
     Alert.alert('Registro exitoso', `¡Bienvenido, ${nombreCompleto}!`);
-    // 🪄 Volver automáticamente al login
     volverAlLogin();
   };
 
@@ -104,10 +116,7 @@ export default function Interfaz_Registrarse({ volverAlLogin }) {
             <Text style={styles.buttonText}>Crear Cuenta</Text>
           </Pressable>
 
-          <Pressable
-            style={styles.loginLink}
-            onPress={volverAlLogin}
-          >
+          <Pressable style={styles.loginLink} onPress={volverAlLogin}>
             <Text style={styles.loginLinkText}>
               ¿Ya tienes cuenta? Inicia sesión aquí
             </Text>
