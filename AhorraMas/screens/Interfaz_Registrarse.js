@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   TextInput,
+  Switch,
   Pressable,
   Alert,
   SafeAreaView,
@@ -11,31 +12,32 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import Interfaz_Registrarse from './screens/Interfaz_Registrarse';
 
-export default function App() {
-
-  const [pantalla, setPantalla] = useState(false);
-  const [usuario, setUsuario] = useState('');
+export default function Interfaz_Registrarse({ volverAlLogin }) {
+  const [nombreCompleto, setNombreCompleto] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
-  const handleLogin = () => {
-    if (usuario.trim() === '' || password.trim() === '') {
-      Alert.alert('Error', 'Por favor completa tu Usuario y Contraseña.');
+  const handleRegistro = () => {
+    if (nombreCompleto.trim() === '' || email.trim() === '' || password.trim() === '') {
+      Alert.alert('Error', 'Por favor completa todos los campos.');
+      return;
+    }
+    if (!aceptaTerminos) {
+      Alert.alert('Aviso', 'Debes aceptar los términos y condiciones.');
       return;
     }
 
-    Alert.alert('Inicio de Sesión', `Bienvenido, ${usuario}`);
+    Alert.alert('Registro exitoso', `¡Bienvenido, ${nombreCompleto}!`);
+    // 🪄 Volver automáticamente al login
+    volverAlLogin();
   };
-
-  if (pantalla) {
-    return <Interfaz_Registrarse volverAlLogin={() => setPantalla(false)} />;
-  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Inicia Sesión</Text>
+        <Text style={styles.headerText}>Crear Cuenta</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -43,22 +45,32 @@ export default function App() {
         style={styles.container}
       >
         <View style={styles.formCard}>
-          <Text style={styles.title}>BIENVENIDO DE NUEVO</Text>
-          <Text>HOLA, INICIA SESIÓN PARA CONTINUAR</Text>
+          <Text style={styles.title}>¡BIENVENIDO!</Text>
+          <Text>Crea tu usuario para continuar</Text>
 
           <Image
-            source={require('./assets/iconos/entrar.png')}
+            source={require('../assets/iconos/inicioS.png')}
             style={styles.headerImage}
           />
 
-          <Text style={styles.label}>Usuario:</Text>
+          <Text style={styles.label}>Nombre Completo:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Usuario"
+            placeholder="Escribe tu nombre completo"
             placeholderTextColor="#999"
-            value={usuario}
-            onChangeText={setUsuario}
-            autoCapitalize="words"
+            value={nombreCompleto}
+            onChangeText={setNombreCompleto}
+          />
+
+          <Text style={styles.label}>Correo Electrónico:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="tu.correo@ejemplo.com"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
 
           <Text style={styles.label}>Contraseña:</Text>
@@ -72,25 +84,32 @@ export default function App() {
             autoCapitalize="none"
           />
 
+          <View style={styles.switchContainer}>
+            <Text style={styles.switchLabel}>Acepto los Términos y Condiciones</Text>
+            <Switch
+              trackColor={{ false: '#ccc', true: '#64b5f6' }}
+              thumbColor={aceptaTerminos ? '#1976D2' : '#f4f3f4'}
+              onValueChange={() => setAceptaTerminos(!aceptaTerminos)}
+              value={aceptaTerminos}
+            />
+          </View>
+
           <Pressable
             style={({ pressed }) => [
               styles.button,
               { opacity: pressed ? 0.8 : 1.0 },
             ]}
-            onPress={handleLogin}
+            onPress={handleRegistro}
           >
-            <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            <Text style={styles.buttonText}>Crear Cuenta</Text>
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.loginLink,
-              { opacity: pressed ? 0.6 : 1.0 },
-            ]}
-            onPress={() => setPantalla(true)}
+            style={styles.loginLink}
+            onPress={volverAlLogin}
           >
             <Text style={styles.loginLinkText}>
-              ¿No tienes cuenta? Regístrate aquí
+              ¿Ya tienes cuenta? Inicia sesión aquí
             </Text>
           </Pressable>
         </View>
@@ -127,10 +146,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#7f1cc5ff',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   label: {
     fontSize: 16,
@@ -147,8 +166,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 20,
     fontSize: 16,
-    color: '#333',
     backgroundColor: '#f9f9f9',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 25,
+  },
+  switchLabel: {
+    color: '#555',
+    fontSize: 15,
+    flex: 1,
+    marginRight: 10,
   },
   button: {
     backgroundColor: '#03A9F4',
