@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 
-export default function App() {
+export default function Interfaz_PresupuestoGuardado() {
   return (
     <View style={styles.container}>
     

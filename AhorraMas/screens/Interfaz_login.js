@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'reac
 import { StatusBar } from 'expo-status-bar';
 
 
-export default function App() {
+export default function Interfaz_Login() {
     // 1. Manejo del estado para los campos de entrada
     const [name, setname] = useState('');
     const [email, setEmail] = useState('');

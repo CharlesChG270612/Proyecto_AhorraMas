@@ -1,90 +1,26 @@
-import React from "react";
-import {View,Text,Image,FlatList,StyleSheet,TouchableOpacity} from "react-native";
+import React, { useState } from "react";
+import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from "react-native";
+import App from "../App";
 
 const transacciones = [
-  {
-    id: "1",
-    nombre: "Netflix",
-    categoria: "Entretenimiento",
-    monto: "- $10",
-    imagen: require("./assets/iconos/netflix.png"),
-    fecha: "01 Nov 2025",
-  },
-  {
-    id: "2",
-    nombre: "Maria Charles",
-    categoria: "Transferencia móvil",
-    monto: "+ $100",
-    imagen: require("./assets/iconos/persona.png"),
-    fecha: "01 Nov 2025",
-  },
-  {
-    id: "3",
-    nombre: "Walmart",
-    categoria: "Supermercado y tienda de conveniencia",
-    monto: "- $50",
-    imagen: require("./assets/iconos/walmart.png"),
-    fecha: "31 Oct 2025",
-  },
-  {
-    id: "4",
-    nombre: "Spotify",
-    categoria: "Música y audio",
-    monto: "- $15",
-    imagen: require("./assets/iconos/spotify.png"),
-    fecha: "30 Oct 2025",
-  },
-  {
-    id: "5",
-    nombre: "Netflix",
-    categoria: "Entretenimiento",
-    monto: "- $10",
-    imagen: require("./assets/iconos/netflix.png"),
-    fecha: "01 Nov 2025",
-  },
-  {
-    id: "6",
-    nombre: "Maria Charles",
-    categoria: "Transferencia móvil",
-    monto: "+ $100",
-    imagen: require("./assets/iconos/persona.png"),
-    fecha: "01 Nov 2025",
-  },
-  {
-    id: "7",
-    nombre: "Walmart",
-    categoria: "Supermercado y tienda de conveniencia",
-    monto: "- $50",
-    imagen: require("./assets/iconos/walmart.png"),
-    fecha: "31 Oct 2025",
-  },
-  {
-    id: "8",
-    nombre: "Spotify",
-    categoria: "Música y audio",
-    monto: "- $15",
-    imagen: require("./assets/iconos/spotify.png"),
-    fecha: "30 Oct 2025",
-  },
-  {
-    id: "9",
-    nombre: "Maria Charles",
-    categoria: "Transferencia móvil",
-    monto: "+ $100",
-    imagen: require("./assets/iconos/persona.png"),
-    fecha: "01 Nov 2025",
-  },
-  {
-    id: "10",
-    nombre: "Walmart",
-    categoria: "Supermercado y tienda de conveniencia",
-    monto: "- $50",
-    imagen: require("./assets/iconos/walmart.png"),
-    fecha: "31 Oct 2025",
-  },
+  { id: "1", nombre: "Netflix", categoria: "Entretenimiento", monto: "- $10", imagen: require("../assets/iconos/netflix.png"), fecha: "01 Nov 2025" },
+  { id: "2", nombre: "Maria Charles", categoria: "Transferencia móvil", monto: "+ $100", imagen: require("../assets/iconos/persona.png"), fecha: "01 Nov 2025" },
+  { id: "3", nombre: "Walmart", categoria: "Supermercado y tienda de conveniencia", monto: "- $50", imagen: require("../assets/iconos/walmart.png"), fecha: "31 Oct 2025" },
+  { id: "4", nombre: "Spotify", categoria: "Música y audio", monto: "- $15", imagen: require("../assets/iconos/spotify.png"), fecha: "30 Oct 2025" },
+  { id: "5", nombre: "Netflix", categoria: "Entretenimiento", monto: "- $10", imagen: require("../assets/iconos/netflix.png"), fecha: "01 Nov 2025" },
+  { id: "6", nombre: "Maria Charles", categoria: "Transferencia móvil", monto: "+ $100", imagen: require("../assets/iconos/persona.png"), fecha: "01 Nov 2025" },
+  { id: "7", nombre: "Walmart", categoria: "Supermercado y tienda de conveniencia", monto: "- $50", imagen: require("../assets/iconos/walmart.png"), fecha: "31 Oct 2025" },
+  { id: "8", nombre: "Spotify", categoria: "Música y audio", monto: "- $15", imagen: require("../assets/iconos/spotify.png"), fecha: "30 Oct 2025" },
+  { id: "9", nombre: "Maria Charles", categoria: "Transferencia móvil", monto: "+ $100", imagen: require("../assets/iconos/persona.png"), fecha: "01 Nov 2025" },
+  { id: "10", nombre: "Walmart", categoria: "Supermercado y tienda de conveniencia", monto: "- $50", imagen: require("../assets/iconos/walmart.png"), fecha: "31 Oct 2025" },
 ];
 
 export default function Interfaz_HistorialTransacciones() {
+  const [mostrarApp, setMostrarApp] = useState(false);
+  if (mostrarApp) {
+    return <App />;
+  }
+
   const renderTransaccion = ({ item }) => (
     <View style={estilos.tarjeta}>
       <Image source={item.imagen} style={estilos.imagen} />
@@ -107,14 +43,24 @@ export default function Interfaz_HistorialTransacciones() {
   return (
     <View style={estilos.contenedorPrincipal}>
       <View style={estilos.contenedor}>
+        {/* ENCABEZADO */}
         <View style={estilos.encabezado}>
-          <Text style={estilos.titulo}>Transacciones recientes</Text>
+          <TouchableOpacity onPress={() => setMostrarApp(true)} style={estilos.btnAtras}>
             <Image
-              source={require("./assets/iconos/buscar.png")}
-              style={estilos.iconoSuperior}
+              source={require("../assets/iconos/flecha-izquierda.png")}
+              style={estilos.iconoAtras}
             />
-          </View>
+          </TouchableOpacity>
 
+          <Text style={estilos.titulo}>Transacciones recientes</Text>
+
+          <Image
+            source={require("../assets/iconos/buscar.png")}
+            style={estilos.iconoSuperior}
+          />
+        </View>
+
+        {/* LISTA */}
         <FlatList
           data={transacciones}
           keyExtractor={(item) => item.id}
@@ -124,28 +70,29 @@ export default function Interfaz_HistorialTransacciones() {
         />
       </View>
 
+      {/* BARRA INFERIOR */}
       <View style={estilos.barraInferior}>
-        <TouchableOpacity style={estilos.botonIcono}>
+        <TouchableOpacity style={estilos.botonIcono} onPress={() => setMostrarApp(true)}>
           <Image
-            source={require("./assets/iconos/inicio.png")}
+            source={require("../assets/iconos/inicio.png")}
             style={estilos.iconoBarra}
           />
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
           <Image
-            source={require("./assets/iconos/buscar.png")}
+            source={require("../assets/iconos/buscar.png")}
             style={estilos.iconoBarra}
           />
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
           <Image
-            source={require("./assets/iconos/notificaciones.png")}
+            source={require("../assets/iconos/notificaciones.png")}
             style={estilos.iconoBarra}
           />
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
           <Image
-            source={require("./assets/iconos/configuraciones.png")}
+            source={require("../assets/iconos/configuraciones.png")}
             style={estilos.iconoBarra}
           />
         </TouchableOpacity>
@@ -166,23 +113,29 @@ const estilos = StyleSheet.create({
   },
   encabezado: {
     flexDirection: "row",
-    justifyContent: "space-between", 
+    justifyContent: "space-between",
     alignItems: "center",
     marginTop: 30,
     marginBottom: 10,
+    paddingHorizontal: 5,
   },
-
+  btnAtras: {
+    padding: 5,
+  },
+  iconoAtras: {
+    width: 25,
+    height: 25,
+    resizeMode: "contain",
+  },
   titulo: {
     fontSize: 20,
     fontWeight: "700",
     color: "#1a1a1a",
   },
-
   iconoSuperior: {
     width: 30,
     height: 30,
   },
-
   tarjeta: {
     flexDirection: "row",
     alignItems: "center",

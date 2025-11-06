@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from "react";
 import { 
   View, 
   Text, 
@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   Image
 } from 'react-native';
+import App from "../App";
 
-const AhorraMasApp = () => {
+export default function Interfaz_Grafica() {
   // Datos para el gráfico de gastos mensual
   const monthlyData = [
     { month: 'ENE', amount: 450 },
@@ -21,9 +22,22 @@ const AhorraMasApp = () => {
   ];
 
   const maxAmount = 600;
+const [mostrarApp, setMostrarApp] = useState(false);
+  if (mostrarApp) {
+    return <App />;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+              <TouchableOpacity onPress={() => setMostrarApp(true)} style={styles.btnAtras}>
+                <Image
+                  source={require("../assets/iconos/flecha-izquierda.png")}
+                  style={styles.iconoAtras}
+                />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Graficas</Text>
+            </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
         
         {/* Sección: Dinero en y Sacar dinero en misma línea */}
@@ -99,36 +113,50 @@ const AhorraMasApp = () => {
 
       {/* Barra inferior de navegación - MÁS GRANDE */}
       <View style={styles.barraInferior}>
-        <TouchableOpacity style={styles.botonIcono}>
+        <TouchableOpacity style={styles.botonIcono} onPress={() => setMostrarApp(true)}>
           <Image
-            source={require("./assets/iconos/inicio.png")}
+            source={require("../assets/iconos/inicio.png")}
             style={styles.iconoBarra}
           />
         </TouchableOpacity>
         <TouchableOpacity style={styles.botonIcono}>
           <Image
-            source={require("./assets/iconos/buscar.png")}
+            source={require("../assets/iconos/buscar.png")}
             style={styles.iconoBarra}
           />
         </TouchableOpacity>
         <TouchableOpacity style={styles.botonIcono}>
           <Image
-            source={require("./assets/iconos/notificaciones.png")}
+            source={require("../assets/iconos/notificaciones.png")}
             style={styles.iconoBarra}
           />
         </TouchableOpacity>
         <TouchableOpacity style={styles.botonIcono}>
           <Image
-            source={require("./assets/iconos/configuraciones.png")}
+            source={require("../assets/iconos/configuraciones.png")}
             style={styles.iconoBarra}
           />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  btnAtras: { position: "absolute", left: 20, padding: 5 },
+  headerTitle: { fontSize: 22, fontWeight: "bold", color: "#222", textAlign: "center" },
+  iconoAtras: { width: 25, height: 25, resizeMode: "contain" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 25,
+    backgroundColor: "#f8f9fa",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    elevation: 8,
+    zIndex: 99,
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -363,5 +391,3 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 });
-
-export default AhorraMasApp;

@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
-export default function App() {
+export default function Interfaz_RegistrarPresupuesto() {
   return (
     <View style={styles.container}>
       

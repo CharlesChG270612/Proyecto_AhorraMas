@@ -1,25 +1,28 @@
-import React from "react";
-import {View,Text,StyleSheet,Image,TouchableOpacity,FlatList} from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList } from "react-native";
+import App from "../App";
 
 export default function Interfaz_PresupuestosGastos() {
+  const [mostrarApp, setMostrarApp] = useState(false);
+
   const servicios = [
     {
       id: "1",
       nombre: "Servicio eléctrico",
       descripcion: "Registra un presupuesto",
-      imagen: require("./assets/iconos/electricidad.png"),
+      imagen: require("../assets/iconos/electricidad.png"),
     },
     {
       id: "2",
       nombre: "Servicio de agua",
       descripcion: "Registra un presupuesto",
-      imagen: require("./assets/iconos/agua.png"),
+      imagen: require("../assets/iconos/agua.png"),
     },
     {
       id: "3",
       nombre: "Servicio de internet",
       descripcion: "Registra un presupuesto",
-      imagen: require("./assets/iconos/internet.png"),
+      imagen: require("../assets/iconos/internet.png"),
     },
   ];
 
@@ -33,14 +36,15 @@ export default function Interfaz_PresupuestosGastos() {
     </View>
   );
 
+  if (mostrarApp) {
+    return <App />;
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
       <View style={estilos.encabezado}>
-        <TouchableOpacity>
-          <Image
-            source={require("./assets/iconos/flecha-izquierda.png")}
-            style={estilos.iconoAtras}
-          />
+        <TouchableOpacity onPress={() => setMostrarApp(true)}>
+          <Image source={require("../assets/iconos/flecha-izquierda.png")} style={estilos.iconoAtras} />
         </TouchableOpacity>
         <Text style={estilos.titulo}>Presupuesto de gastos</Text>
       </View>
@@ -51,18 +55,19 @@ export default function Interfaz_PresupuestosGastos() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={estilos.listaContenido}
       />
+
       <View style={estilos.barraInferior}>
-        <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("./assets/iconos/inicio.png")} style={estilos.iconoBarra} />
+        <TouchableOpacity style={estilos.botonIcono} onPress={() => setMostrarApp(true)}>
+          <Image source={require("../assets/iconos/inicio.png")} style={estilos.iconoBarra} />
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("./assets/iconos/buscar.png")} style={estilos.iconoBarra} />
+          <Image source={require("../assets/iconos/buscar.png")} style={estilos.iconoBarra} />
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("./assets/iconos/notificaciones.png")} style={estilos.iconoBarra} />
+          <Image source={require("../assets/iconos/notificaciones.png")} style={estilos.iconoBarra} />
         </TouchableOpacity>
         <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("./assets/iconos/configuraciones.png")} style={estilos.iconoBarra} />
+          <Image source={require("../assets/iconos/configuraciones.png")} style={estilos.iconoBarra} />
         </TouchableOpacity>
       </View>
     </View>
@@ -123,7 +128,7 @@ const estilos = StyleSheet.create({
   barraInferior: {
     position: "absolute",
     bottom: 0,
-    paddingBottom:45,
+    paddingBottom: 45,
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-around",
