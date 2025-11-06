@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
-const MovimientosScreen = ({ navigation }) => {
+export default function MovimientosScreen ({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
@@ -339,5 +339,3 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 });
-
-export default MovimientosScreen;
