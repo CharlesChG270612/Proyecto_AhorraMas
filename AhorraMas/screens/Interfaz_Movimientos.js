@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -6,11 +6,290 @@ import {
   ScrollView, 
   SafeAreaView,
   TouchableOpacity,
-  Image
+  Alert,
+  Modal,
+  TextInput
 } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
-export default function MovimientosScreen ({ navigation }) {
+export default function MovimientosScreen({ navigation }) {
+  const [movimientos, setMovimientos] = useState([
+    // Movimientos de Hoy
+    { 
+      id: 1, 
+      nombre: 'CEA', 
+      monto: -280, 
+      estado: 'Sin éxito', 
+      fecha: 'hoy',
+      icono: 'tint',
+      color: '#4A90E2',
+      iconoLib: FontAwesome5
+    },
+    
+    // Movimientos de Ayer
+    { 
+      id: 2, 
+      nombre: 'Pago Nómina', 
+      monto: 1200, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'money-check',
+      color: '#4ECDC4',
+      iconoLib: FontAwesome5
+    },
+    { 
+      id: 3, 
+      nombre: 'CFE', 
+      monto: -480, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'flash',
+      color: '#45B7D1',
+      iconoLib: Ionicons
+    },
+    { 
+      id: 4, 
+      nombre: 'Recibiste de: Juan', 
+      monto: 500, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'swap-horiz',
+      color: '#96CEB4',
+      iconoLib: MaterialIcons
+    },
+    { 
+      id: 5, 
+      nombre: 'Telmex', 
+      monto: -100, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'call',
+      color: '#FFBE76',
+      iconoLib: Ionicons
+    },
+    { 
+      id: 6, 
+      nombre: 'Pago Nómina', 
+      monto: 1200, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'money-check',
+      color: '#4ECDC4',
+      iconoLib: FontAwesome5
+    },
+    { 
+      id: 7, 
+      nombre: 'CFE', 
+      monto: -480, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'flash',
+      color: '#45B7D1',
+      iconoLib: Ionicons
+    },
+    { 
+      id: 8, 
+      nombre: 'Recibiste de: María', 
+      monto: 500, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'swap-horiz',
+      color: '#96CEB4',
+      iconoLib: MaterialIcons
+    },
+    { 
+      id: 9, 
+      nombre: 'Telmex', 
+      monto: -100, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'call',
+      color: '#FFBE76',
+      iconoLib: Ionicons
+    },
+    { 
+      id: 10, 
+      nombre: 'Pago Nómina Extra', 
+      monto: 800, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'money-check',
+      color: '#4ECDC4',
+      iconoLib: FontAwesome5
+    },
+    { 
+      id: 11, 
+      nombre: 'CFE', 
+      monto: -320, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'flash',
+      color: '#45B7D1',
+      iconoLib: Ionicons
+    },
+    { 
+      id: 12, 
+      nombre: 'Recibiste de: Pedro', 
+      monto: 300, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'swap-horiz',
+      color: '#96CEB4',
+      iconoLib: MaterialIcons
+    },
+    { 
+      id: 13, 
+      nombre: 'Telmex', 
+      monto: -150, 
+      estado: 'Exitoso', 
+      fecha: 'ayer',
+      icono: 'call',
+      color: '#FFBE76',
+      iconoLib: Ionicons
+    }
+  ]);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [movimientoEditando, setMovimientoEditando] = useState(null);
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [nuevoMonto, setNuevoMonto] = useState('');
+
+  // Función para eliminar movimiento
+  const eliminarMovimiento = (id) => {
+    Alert.alert(
+      "Eliminar Movimiento",
+      "¿Estás seguro de que quieres eliminar este movimiento?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        { 
+          text: "Eliminar", 
+          onPress: () => {
+            setMovimientos(movimientos.filter(mov => mov.id !== id));
+          },
+          style: "destructive"
+        }
+      ]
+    );
+  };
+
+  // Función para editar movimiento
+  const iniciarEdicion = (movimiento) => {
+    setMovimientoEditando(movimiento);
+    setNuevoNombre(movimiento.nombre);
+    setNuevoMonto(Math.abs(movimiento.monto).toString());
+    setModalVisible(true);
+  };
+
+  const guardarEdicion = () => {
+    if (nuevoNombre && nuevoMonto) {
+      const montoNumero = movimientoEditando.monto < 0 ? -Math.abs(parseFloat(nuevoMonto)) : Math.abs(parseFloat(nuevoMonto));
+      
+      setMovimientos(movimientos.map(mov => 
+        mov.id === movimientoEditando.id 
+          ? { ...mov, nombre: nuevoNombre, monto: montoNumero }
+          : mov
+      ));
+      setModalVisible(false);
+      setMovimientoEditando(null);
+      setNuevoNombre('');
+      setNuevoMonto('');
+    }
+  };
+
+  // Función para marcar como depositado/exitoso - SOLO para movimientos no exitosos
+  const depositarMovimiento = (id, movimiento) => {
+    // Solo mostrar alerta si el movimiento NO es exitoso
+    if (movimiento.estado !== 'Exitoso') {
+      Alert.alert(
+        "Depositar Movimiento",
+        "¿Confirmas que deseas marcar este movimiento como depositado?",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel"
+          },
+          { 
+            text: "Depositar", 
+            onPress: () => {
+              setMovimientos(movimientos.map(mov => 
+                mov.id === id ? { ...mov, estado: 'Exitoso' } : mov
+              ));
+              Alert.alert("Éxito", "Se ha pagado correctamente");
+            }
+          }
+        ]
+      );
+    }
+    // Si ya es exitoso, no hacer nada al hacer clic
+  };
+
+  // Función para agrupar movimientos por fecha
+  const movimientosPorFecha = movimientos.reduce((acc, mov) => {
+    if (!acc[mov.fecha]) {
+      acc[mov.fecha] = [];
+    }
+    acc[mov.fecha].push(mov);
+    return acc;
+  }, {});
+
+  const renderMovimientoItem = (movimiento) => {
+    const IconComponent = movimiento.iconoLib;
+    const esExitoso = movimiento.estado === 'Exitoso';
+    
+    return (
+      <TouchableOpacity 
+        key={movimiento.id}
+        style={[
+          styles.movimientoItem,
+          esExitoso ? styles.movimientoExitoso : styles.movimientoPendiente
+        ]}
+        onPress={() => depositarMovimiento(movimiento.id, movimiento)}
+        onLongPress={() => {
+          Alert.alert(
+            "Opciones",
+            "¿Qué deseas hacer con este movimiento?",
+            [
+              {
+                text: "Editar",
+                onPress: () => iniciarEdicion(movimiento)
+              },
+              {
+                text: "Eliminar",
+                onPress: () => eliminarMovimiento(movimiento.id),
+                style: "destructive"
+              },
+              {
+                text: "Cancelar",
+                style: "cancel"
+              }
+            ]
+          );
+        }}
+      >
+        <View style={[styles.iconoContainer, { backgroundColor: movimiento.color }]}>
+          <IconComponent name={movimiento.icono} size={24} color="#fff" />
+        </View>
+        <View style={styles.movimientoInfo}>
+          <Text style={styles.movimientoNombre}>{movimiento.nombre}</Text>
+          {movimiento.estado && (
+            <Text style={[
+              styles.movimientoEstado,
+              esExitoso ? styles.estadoExitoso : styles.estadoSinExito
+            ]}>
+              {movimiento.estado}
+            </Text>
+          )}
+        </View>
+        <Text style={movimiento.monto >= 0 ? styles.movimientoMontoPositivo : styles.movimientoMontoNegativo}>
+          {movimiento.monto >= 0 ? '+ ' : '- '}${Math.abs(movimiento.monto)}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
@@ -29,193 +308,62 @@ export default function MovimientosScreen ({ navigation }) {
           <View style={styles.placeholder} />
         </View>
 
-        {/* Sección Hoy */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hoy</Text>
-          
-          {/* Movimiento 1 - CEA con icono de gota */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#4A90E2' }]}>
-              <FontAwesome5 name="tint" size={24} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>CEA</Text>
-              <Text style={styles.movimientoEstado}>Sin éxito</Text>
-            </View>
-            <Text style={styles.movimientoMontoNegativo}>- $280</Text>
+        {/* Secciones por fecha */}
+        {Object.entries(movimientosPorFecha).map(([fecha, movs]) => (
+          <View key={fecha} style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {fecha === 'hoy' ? 'Hoy' : 'Ayer'}
+            </Text>
+            {movs.map(renderMovimientoItem)}
           </View>
-        </View>
-
-        {/* Sección Ayer */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ayer</Text>
-          
-          {/* Movimiento 1 - Nómina */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#4ECDC4' }]}>
-              <FontAwesome5 name="money-check" size={22} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Pago Nómina</Text>
-            </View>
-            <Text style={styles.movimientoMontoPositivo}>+$1200</Text>
-          </View>
-
-          {/* Movimiento 2 - CFE */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#45B7D1' }]}>
-              <Ionicons name="flash" size={26} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>CFE</Text>
-              <Text style={styles.movimientoEstado}>Exitoso</Text>
-            </View>
-            <Text style={styles.movimientoMontoNegativo}>- $480</Text>
-          </View>
-
-          {/* Movimiento 3 - Transferencia recibida */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#96CEB4' }]}>
-              <MaterialIcons name="swap-horiz" size={26} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Recibiste de : Juan</Text>
-            </View>
-            <Text style={styles.movimientoMontoPositivo}>+ $500</Text>
-          </View>
-
-          {/* Movimiento 4 - Telmex */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#FFBE76' }]}>
-              <Ionicons name="call" size={22} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Telmex</Text>
-              <Text style={styles.movimientoEstado}>Exitoso</Text>
-            </View>
-            <Text style={styles.movimientoMontoNegativo}>- $100</Text>
-          </View>
-
-          {/* Movimiento 5 - Nómina */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#4ECDC4' }]}>
-              <FontAwesome5 name="money-check" size={22} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Pago Nómina</Text>
-            </View>
-            <Text style={styles.movimientoMontoPositivo}>+$1200</Text>
-          </View>
-
-          {/* Movimiento 6 - CFE */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#45B7D1' }]}>
-              <Ionicons name="flash" size={26} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>CFE</Text>
-              <Text style={styles.movimientoEstado}>Exitoso</Text>
-            </View>
-            <Text style={styles.movimientoMontoNegativo}>- $480</Text>
-          </View>
-
-          {/* Movimiento 7 - Transferencia recibida */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#96CEB4' }]}>
-              <MaterialIcons name="swap-horiz" size={26} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Recibiste de : María</Text>
-            </View>
-            <Text style={styles.movimientoMontoPositivo}>+ $500</Text>
-          </View>
-
-          {/* Movimiento 8 - Telmex */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#FFBE76' }]}>
-              <Ionicons name="call" size={22} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Telmex</Text>
-              <Text style={styles.movimientoEstado}>Exitoso</Text>
-            </View>
-            <Text style={styles.movimientoMontoNegativo}>- $100</Text>
-          </View>
-
-          {/* Movimientos adicionales para hacer scroll más evidente */}
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#4ECDC4' }]}>
-              <FontAwesome5 name="money-check" size={22} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Pago Nómina Extra</Text>
-            </View>
-            <Text style={styles.movimientoMontoPositivo}>+$800</Text>
-          </View>
-
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#45B7D1' }]}>
-              <Ionicons name="flash" size={26} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>CFE</Text>
-              <Text style={styles.movimientoEstado}>Exitoso</Text>
-            </View>
-            <Text style={styles.movimientoMontoNegativo}>- $320</Text>
-          </View>
-
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#96CEB4' }]}>
-              <MaterialIcons name="swap-horiz" size={26} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Recibiste de : Pedro</Text>
-            </View>
-            <Text style={styles.movimientoMontoPositivo}>+ $300</Text>
-          </View>
-
-          <View style={styles.movimientoItem}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#FFBE76' }]}>
-              <Ionicons name="call" size={22} color="#fff" />
-            </View>
-            <View style={styles.movimientoInfo}>
-              <Text style={styles.movimientoNombre}>Telmex</Text>
-              <Text style={styles.movimientoEstado}>Exitoso</Text>
-            </View>
-            <Text style={styles.movimientoMontoNegativo}>- $150</Text>
-          </View>
-
-        </View>
+        ))}
 
       </ScrollView>
 
-      {/* Barra inferior con iconos más grandes */}
-      <View style={styles.barraInferior}>
-        <TouchableOpacity style={styles.botonIcono}>
-          <Image
-            source={require("./assets/iconos/inicio.png")}
-            style={styles.iconoBarra}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.botonIcono}>
-          <Image
-            source={require("./assets/iconos/buscar.png")}
-            style={styles.iconoBarra}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.botonIcono}>
-          <Image
-            source={require("./assets/iconos/notificaciones.png")}
-            style={styles.iconoBarra}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.botonIcono}>
-          <Image
-            source={require("./assets/iconos/configuraciones.png")}
-            style={styles.iconoBarra}
-          />
-        </TouchableOpacity>
-      </View>
+      {/* Modal para editar movimiento */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Editar Movimiento</Text>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre del movimiento"
+              value={nuevoNombre}
+              onChangeText={setNuevoNombre}
+            />
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Monto"
+              keyboardType="numeric"
+              value={nuevoMonto}
+              onChangeText={setNuevoMonto}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={guardarEdicion}
+              >
+                <Text style={styles.saveButtonText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -230,7 +378,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 100, // Espacio para la barra inferior
+    paddingBottom: 20, // Reducido ya que no hay barra inferior
   },
   header: {
     flexDirection: 'row',
@@ -272,6 +420,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f8f8f8',
   },
+  movimientoExitoso: {
+    opacity: 0.7, // Un poco más transparente para movimientos exitosos
+  },
+  movimientoPendiente: {
+    // Estilo normal para movimientos pendientes
+  },
   iconoContainer: {
     width: 40,
     height: 40,
@@ -291,8 +445,13 @@ const styles = StyleSheet.create({
   },
   movimientoEstado: {
     fontSize: 14,
-    color: '#666',
     fontStyle: 'italic',
+  },
+  estadoExitoso: {
+    color: '#4CAF50',
+  },
+  estadoSinExito: {
+    color: '#F44336',
   },
   movimientoMontoPositivo: {
     fontSize: 16,
@@ -304,38 +463,71 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#F44336',
   },
-  barraInferior: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  // Estilos para el modal
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: -2,
+      height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 8,
+    elevation: 5,
+    width: '80%',
   },
-  botonIcono: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  input: {
+    height: 40,
+    width: '100%',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+  },
+  modalButton: {
+    flex: 1,
     padding: 12,
     borderRadius: 8,
+    marginHorizontal: 5,
+    alignItems: 'center',
   },
-  iconoBarra: {
-    width: 36,
-    height: 36,
-    resizeMode: 'contain',
+  cancelButton: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  saveButton: {
+    backgroundColor: '#4A90E2',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: '600',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
