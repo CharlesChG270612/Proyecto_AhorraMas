@@ -1,225 +1,153 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView,Image } from "react-native";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Image, 
+  ScrollView, 
+  TouchableOpacity 
+} from "react-native";
 
-export default function Interfaz_Inicio() {
+export default function Interfaz_Inicio({ navigation }) {
+
+  const opciones = [
+    {
+      id: 1,
+      titulo: "Presupuestos y Gastos",
+      descripcion: "Registra y controla tus gastos fácilmente.",
+      imagen: require("../assets/iconos/presupuesto.png"),
+      destino: "Interfaz_PresupuestosGastos",
+    },
+    {
+      id: 2,
+      titulo: "Historial de Transacciones",
+      descripcion: "Consulta tus movimientos recientes.",
+      imagen: require("../assets/iconos/historial-de-transacciones.png"),
+      destino: "Interfaz_HistorialTransacciones",
+    },
+    {
+      id: 3,
+      titulo: "Gráfica Financiera",
+      descripcion: "Visualiza tus gastos de forma clara.",
+      imagen: require("../assets/iconos/graficas.png"),
+      destino: "Interfaz_Grafica",
+    },
+    {
+      id: 4,
+      titulo: "Movimientos",
+      descripcion: "Agrega ingresos y egresos fácilmente.",
+      imagen: require("../assets/iconos/movimientos.png"),
+      destino: "Interfaz_Movimientos",
+    },
+  ];
+
   return (
-    <ScrollView contentContainerStyle={estilos.contenedor}>
-      <Text style={estilos.saludo}>Buenos días,</Text>
-      <Text style={estilos.nombre}>ÁNGEL!</Text>
-
-      <View style={estilos.contenedorTarjeta}>
-        <View style={estilos.tarjeta}>
-          <View style={estilos.superiorTarjeta}>
-            <Text style={estilos.nombreTarjeta}>Ángel</Text>
-            <Text style={estilos.apellidoTarjeta}>Hernandéz</Text>
-            <Text style={estilos.subtituloTarjeta}>OverBridge Expert</Text>
-          </View>
-          <View style={estilos.inferiorTarjeta}>
-            <Text style={estilos.numeroTarjeta}>4756 •••• •••• 9018</Text>
-            <Text style={estilos.saldoTarjeta}>$3,469.52</Text>
-            <Text style={estilos.marcaTarjeta}>VISA</Text>
-          </View>
-        </View>
+    <ScrollView style={styles.container}>
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.titulo}>Ahorra+ App</Text>
+        <Text style={styles.subtitulo}>Tu asistente financiero personal</Text>
       </View>
 
-      <View style={estilos.contenedorOpciones}>
-        <TouchableOpacity style={estilos.opcion}>
-          <View style={[estilos.cajaIcono, { backgroundColor: "#6c63ff1a" }]}>
-            <Image
-              source={require("./assets/iconos/historial-de-transacciones.png")}
-              style={estilos.icono}
-            />
-          </View>
-          <Text style={estilos.textoOpcion}>Historial de{"\n"}transacciones</Text>
-        </TouchableOpacity>
+      
 
-        <TouchableOpacity style={estilos.opcion}>
-          <View style={[estilos.cajaIcono, { backgroundColor: "#ff98001a" }]}>
-            <Image
-              source={require("./assets/iconos/presupuesto.png")}
-              style={estilos.icono}
-            />
-          </View>
-          <Text style={estilos.textoOpcion}>Presupuestos{"\n"}de gastos</Text>
-        </TouchableOpacity>
+      {/* Opciones */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Funciones Principales</Text>
 
-        <TouchableOpacity style={estilos.opcion}>
-          <View style={[estilos.cajaIcono, { backgroundColor: "#4caf501a" }]}>
-           <Image
-            source={require("./assets/iconos/graficas.png")}
-            style={estilos.icono}
-          />
-          </View>
-          <Text style={estilos.textoOpcion}>Gráfica</Text>
-        </TouchableOpacity>
+        {opciones.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.card}
+            onPress={() => navigation.navigate(item.destino)}
+          >
+            <Image source={item.imagen} style={styles.cardImage} />
 
-        <TouchableOpacity style={estilos.opcion}>
-          <View style={[estilos.cajaIcono, { backgroundColor: "#e83b631a" }]}>
-            <Image
-              source={require("./assets/iconos/movimientos.png")}
-              style={estilos.icono}
-            />
-          </View>
-          <Text style={estilos.textoOpcion}>Movimientos</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={estilos.barraInferior}>
-        <TouchableOpacity style={estilos.iconoActivo}>
-          <Image
-              source={require("./assets/iconos/inicio.png")}
-              style={estilos.iconoBarra}
-            />
-          <Text style={estilos.textoActivo}>Inicio</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={estilos.botonIcono}>
-          <Image
-              source={require("./assets/iconos/buscar.png")}
-              style={estilos.iconoBarra}
-            />
-        </TouchableOpacity>
-        <TouchableOpacity style={estilos.botonIcono}>
-          <Image
-              source={require("./assets/iconos/notificaciones.png")}
-              style={estilos.iconoBarra}
-            />
-        </TouchableOpacity>
-        <TouchableOpacity style={estilos.botonIcono}>
-          <Image
-              source={require("./assets/iconos/configuraciones.png")}
-              style={estilos.iconoBarra}
-            />
-        </TouchableOpacity>
+            <View style={styles.cardContent}>
+              <Text style={styles.cardTitle}>{item.titulo}</Text>
+              <Text style={styles.cardDesc}>{item.descripcion}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </View>
     </ScrollView>
   );
 }
 
-const estilos = StyleSheet.create({
-  contenedor: {
-    flexGrow: 1,
-    backgroundColor: "#ffffffff",
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F7FA",
+    paddingHorizontal: 15,
+  },
+
+  header: {
+    paddingVertical: 25,
     alignItems: "center",
-    paddingVertical: 50,
   },
-  saludo: {
-    fontSize: 26,
-    fontWeight: "600",
-    color: "#000",
-  },
-  nombre: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#000",
-    marginBottom: 25,
-  },
-  contenedorTarjeta: {
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  tarjeta: {
-    width: 320,
-    height: 180,
-    borderRadius: 15,
-    backgroundColor: "#452b8b",
-    padding: 20,
-    justifyContent: "space-between",
-    overflow: "hidden",
-  },
-  superiorTarjeta: {
-    flexDirection: "column",
-  },
-  nombreTarjeta: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  apellidoTarjeta: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  subtituloTarjeta: {
-    color: "#ddd",
-    fontSize: 12,
-  },
-  inferiorTarjeta: {
-    marginTop: 20,
-  },
-  numeroTarjeta: {
-    color: "#fff",
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  saldoTarjeta: {
-    color: "#fff",
-    fontSize: 18,
+  titulo: {
+    fontSize: 28,
     fontWeight: "bold",
-  },
-  marcaTarjeta: {
-    color: "#fff",
-    fontSize: 16,
-    textAlign: "right",
-  },
-  contenedorOpciones: {
-    width: "90%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  opcion: {
-    width: "45%",
-    alignItems: "center",
-    marginVertical: 15,
-  },
-  cajaIcono: {
-    width: 65,
-    height: 65,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  icono: {
-    justifyContent: "center",
-    alignItems: "center",
-     width: 50,
-    height: 50,
-  },
-  textoOpcion: {
-    textAlign: "center",
-    fontSize: 14,
     color: "#333",
   },
-  barraInferior: {
+  subtitulo: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 5,
+  },
+
+  imageContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  banner: {
+    width: 200,
+    height: 200,
+    resizeMode: "contain",
+  },
+
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#444",
+    marginBottom: 10,
+  },
+
+  card: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    width: "100%",
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderColor: "#ddd",
-    marginTop: 110,
-    backgroundColor: "#fff",
-  },
-  botonIcono: {
+    backgroundColor: "#FFF",
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     alignItems: "center",
   },
-  iconoBarra: {
-    justifyContent: "center",
-    alignItems: "center",
-     width: 30,
-    height: 30,
+
+  cardImage: {
+    width: 60,
+    height: 60,
+    marginRight: 15,
+    resizeMode: "contain",
   },
-  textoActivo: {
-    fontSize: 12,
-    color: "#fff",
+
+  cardContent: {
+    flex: 1,
   },
-  iconoActivo: {
-    backgroundColor: "#452b8b",
-    paddingHorizontal: 20,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignItems: "center",
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  cardDesc: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
   },
 });
