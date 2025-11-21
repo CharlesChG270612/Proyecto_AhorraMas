@@ -12,27 +12,24 @@ import {
   Platform,
 } from "react-native";
 
-export default function Interfaz_Registrarse({ navigation }) {
+export default function LoginScreen({ navigation }) {
   const [usuario, setUsuario] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleRegistro = () => {
-    if (!usuario.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Error", "Completa todos los campos.");
+  const handleLogin = () => {
+    if (!usuario.trim() || !password.trim()) {
+      Alert.alert("Error", "Completa Usuario y Contraseña.");
       return;
     }
 
-    Alert.alert("Registrado", "Tu cuenta ha sido creada exitosamente.");
-
-    // 👉 Regresa al Login
-    navigation.replace("Login");
+    // 👉 Navega a las TABS
+    navigation.replace("Tabs");
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Crear Cuenta</Text>
+        <Text style={styles.headerText}>Inicia Sesión</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -40,11 +37,13 @@ export default function Interfaz_Registrarse({ navigation }) {
         style={styles.container}
       >
         <View style={styles.formCard}>
-          <Text style={styles.title}>REGISTRO</Text>
-          <Text style={{ marginBottom: 10 }}>Crea una nueva cuenta</Text>
+          <Text style={styles.title}>BIENVENIDO DE NUEVO</Text>
+          <Text style={{ marginBottom: 10 }}>
+            Inicia sesión para continuar
+          </Text>
 
           <Image
-            source={require("../assets/iconos/inicioS.png")}
+            source={require("../assets/iconos/entrar.png")}
             style={styles.headerImage}
           />
 
@@ -58,16 +57,6 @@ export default function Interfaz_Registrarse({ navigation }) {
             autoCapitalize="none"
           />
 
-          <Text style={styles.label}>Correo electrónico:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Correo"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-          />
-
           <Text style={styles.label}>Contraseña:</Text>
           <TextInput
             style={styles.input}
@@ -78,13 +67,13 @@ export default function Interfaz_Registrarse({ navigation }) {
             secureTextEntry
           />
 
-          <Pressable style={styles.button} onPress={handleRegistro}>
-            <Text style={styles.buttonText}>Guardar</Text>
+          <Pressable style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Iniciar Sesión</Text>
           </Pressable>
 
-          <Pressable onPress={() => navigation.replace("Login")}>
+          <Pressable onPress={() => navigation.navigate("Registro")}>
             <Text style={styles.loginLinkText}>
-              ¿Ya tienes cuenta? Inicia sesión
+              ¿No tienes cuenta? Regístrate aquí
             </Text>
           </Pressable>
         </View>

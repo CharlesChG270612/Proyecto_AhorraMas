@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList } from "react-native";
-import Interfaz_RegistrarPresupuesto from "./Interfaz_RegistrarPresupuesto";
-import Interfaz_Inicio from "./Interfaz_Inicio";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Interfaz_PresupuestosGastos() {
-  const [pantalla, setPantalla] = useState("presupuestos");
-  const [mostrarApp, setMostrarApp] = useState(false);
+  const navigation = useNavigation();
 
   const servicios = [
     { id: "1", nombre: "Servicio eléctrico", descripcion: "Registra un presupuesto", imagen: require("../assets/iconos/electricidad.png") },
@@ -13,11 +11,8 @@ export default function Interfaz_PresupuestosGastos() {
     { id: "3", nombre: "Servicio de internet", descripcion: "Registra un presupuesto", imagen: require("../assets/iconos/internet.png") },
   ];
 
-  if (mostrarApp) return <Interfaz_Inicio />;
-  if (pantalla === "registrar") return <Interfaz_RegistrarPresupuesto onGuardar={() => setPantalla("guardado")} volver={() => setPantalla("presupuestos")} />;
-
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => setPantalla("registrar")}>
+    <TouchableOpacity onPress={() => navigation.navigate("RegistrarPresupuesto")}>
       <View style={estilos.tarjeta}>
         <View>
           <Text style={estilos.nombre}>{item.nombre}</Text>
@@ -30,8 +25,9 @@ export default function Interfaz_PresupuestosGastos() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+
       <View style={estilos.encabezado}>
-        <TouchableOpacity onPress={() => setMostrarApp(true)}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image source={require("../assets/iconos/flecha-izquierda.png")} style={estilos.iconoAtras} />
         </TouchableOpacity>
         <Text style={estilos.titulo}>Presupuesto de gastos</Text>
@@ -44,24 +40,13 @@ export default function Interfaz_PresupuestosGastos() {
         contentContainerStyle={estilos.listaContenido}
       />
 
-      <TouchableOpacity style={estilos.botonOtroTema} onPress={() => setPantalla("registrar")}>
+      <TouchableOpacity
+        style={estilos.botonOtroTema}
+        onPress={() => navigation.navigate("RegistrarPresupuesto")}
+      >
         <Text style={estilos.textoBotonOtroTema}>Designar presupuesto a otro tema</Text>
       </TouchableOpacity>
 
-      <View style={estilos.barraInferior}>
-        <TouchableOpacity style={estilos.botonIcono} onPress={() => setMostrarApp(true)}>
-          <Image source={require("../assets/iconos/inicio.png")} style={estilos.iconoBarra} />
-        </TouchableOpacity>
-        <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("../assets/iconos/buscar.png")} style={estilos.iconoBarra} />
-        </TouchableOpacity>
-        <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("../assets/iconos/notificaciones.png")} style={estilos.iconoBarra} />
-        </TouchableOpacity>
-        <TouchableOpacity style={estilos.botonIcono}>
-          <Image source={require("../assets/iconos/configuraciones.png")} style={estilos.iconoBarra} />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -82,14 +67,7 @@ const estilos = StyleSheet.create({
   imagenServicio: { width: 90, height: 90, resizeMode: "contain" },
   botonOtroTema: {
     backgroundColor: "#2196F3", marginHorizontal: 20, borderRadius: 15,
-    paddingVertical: 14, alignItems: "center", marginBottom: 90,
+    paddingVertical: 14, alignItems: "center",
   },
   textoBotonOtroTema: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  barraInferior: {
-    position: "absolute", bottom: 0, paddingBottom: 45, width: "100%",
-    flexDirection: "row", justifyContent: "space-around", alignItems: "center",
-    paddingVertical: 12, borderTopWidth: 1, borderColor: "#ddd", backgroundColor: "#fff", elevation: 10,
-  },
-  botonIcono: { alignItems: "center" },
-  iconoBarra: { width: 30, height: 30 },
 });
