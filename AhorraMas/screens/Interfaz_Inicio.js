@@ -87,7 +87,7 @@ export default function Interfaz_Inicio({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
-      <BarraProgreso gasto={1000} presupuesto={5000} />
+      <BarraProgreso gasto={0} presupuesto={5000} />
       
     </ScrollView>
   );
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginTop: 80,
+    marginTop: 60,
   },
   card: {
     width: "48%",

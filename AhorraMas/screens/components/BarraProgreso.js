@@ -2,7 +2,23 @@ import { View, Text, StyleSheet } from "react-native";
 import React from "react";
 
 export default function BarraProgreso({ gasto = 3200, presupuesto = 5000 }) {
-  const progreso = Math.min(gasto / presupuesto, 1);
+  const porcentaje = gasto / presupuesto;
+  const progreso = Math.min(porcentaje, 1);
+
+
+  let colorBarra = "#2ecc71"; 
+  let mensaje = "";
+  let colorMensaje = "#444";
+
+  if (porcentaje >= 0.7 && porcentaje < 1) {
+    colorBarra = "#f1c40f";
+    mensaje = "⚠ Ya estás cerca de tu límite de presupuesto";
+    colorMensaje = "#e67e22";
+  } else if (porcentaje >= 1) {
+    colorBarra = "#e74c3c"; 
+    mensaje = "❌ Has excedido tu presupuesto";
+    colorMensaje = "#c0392b";
+  }
 
   return (
     <View style={styles.container}>
@@ -14,12 +30,18 @@ export default function BarraProgreso({ gasto = 3200, presupuesto = 5000 }) {
       </View>
 
       <View style={styles.barBackground}>
-        <View style={[styles.barFill, { width: `${progreso * 100}%` }]} />
+        <View style={[styles.barFill, { width: `${progreso * 100}%`, backgroundColor: colorBarra }]} />
       </View>
 
       <Text style={styles.subtext}>
         Te quedan ${presupuesto - gasto} disponibles
       </Text>
+
+      {mensaje !== "" && (
+        <Text style={[styles.alertText, { color: colorMensaje }]}>
+          {mensaje}
+        </Text>
+      )}
     </View>
   );
 }
@@ -50,7 +72,6 @@ const styles = StyleSheet.create({
   },
   barFill: {
     height: "100%",
-    backgroundColor: "#358d15ff",
     borderRadius: 10
   },
   subtext: {
@@ -58,5 +79,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#4B4B4B",
     fontWeight: "500"
+  },
+  alertText: {
+    marginTop: 10,
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center"
   }
 });

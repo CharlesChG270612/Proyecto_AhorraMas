@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   FlatList,
   StyleSheet,
   Alert,
-  ScrollView,
+  Modal,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
@@ -20,13 +20,32 @@ export default function DetallePresupuesto({ route }) {
   const [presupuestos, setPresupuestos] = useState([]);
   const [editarId, setEditarId] = useState(null);
 
+  const [modalFiltros, setModalFiltros] = useState(false);
+  const [filtroEmpresa, setFiltroEmpresa] = useState("todas");
+  const [filtroMes, setFiltroMes] = useState("todas");
+
+  const meses = [
+    ["01", "Enero"],
+    ["02", "Febrero"],
+    ["03", "Marzo"],
+    ["04", "Abril"],
+    ["05", "Mayo"],
+    ["06", "Junio"],
+    ["07", "Julio"],
+    ["08", "Agosto"],
+    ["09", "Septiembre"],
+    ["10", "Octubre"],
+    ["11", "Noviembre"],
+    ["12", "Diciembre"],
+  ];
+
   const validarCampos = () => {
     if (!empresa) {
       Alert.alert("Falta empresa", "Selecciona una empresa.");
       return false;
     }
     if (!tipoMonto.trim()) {
-      Alert.alert("Falta tipo de monto", "Debes ingresar el tipo de monto.");
+      Alert.alert("Falta descripción", "Debes ingresar una descripción.");
       return false;
     }
     if (!monto.trim()) {
@@ -35,7 +54,7 @@ export default function DetallePresupuesto({ route }) {
     }
     const montoNum = Number(monto);
     if (isNaN(montoNum) || montoNum <= 0) {
-      Alert.alert("Monto inválido", "El monto debe ser un número mayor a 0.");
+      Alert.alert("Monto inválido", "El monto debe ser mayor a 0.");
       return false;
     }
     return true;
@@ -44,51 +63,28 @@ export default function DetallePresupuesto({ route }) {
   const agregarPresupuesto = () => {
     if (!validarCampos()) return;
 
+    const montoNum = Number(monto);
+
     if (editarId) {
-      Alert.alert("Confirmación", "¿Deseas actualizar el registro?", [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Actualizar",
-          onPress: () => {
-            setPresupuestos((prev) =>
-              prev.map((p) =>
-                p.id === editarId ? { ...p, empresa, tipoMonto, monto } : p
-              )
-            );
-            limpiar();
-          },
-        },
-      ]);
+      setPresupuestos((prev) =>
+        prev.map((p) =>
+          p.id === editarId
+            ? { ...p, empresa, tipoMonto, monto: montoNum }
+            : p
+        )
+      );
     } else {
       const nuevo = {
         id: Date.now().toString(),
         empresa,
         tipoMonto,
-        monto,
+        monto: montoNum,
+        fecha: new Date().toLocaleDateString("es-ES"),
       };
       setPresupuestos((prev) => [...prev, nuevo]);
-      limpiar();
     }
-  };
 
-  const eliminarPresupuesto = (id) => {
-    Alert.alert("Confirmación", "¿Eliminar este presupuesto?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: () => {
-          setPresupuestos((prev) => prev.filter((p) => p.id !== id));
-        },
-      },
-    ]);
-  };
-
-  const editarPresupuesto = (item) => {
-    setEmpresa(item.empresa);
-    setTipoMonto(item.tipoMonto);
-    setMonto(item.monto.toString());
-    setEditarId(item.id);
+    limpiar();
   };
 
   const limpiar = () => {
@@ -98,33 +94,64 @@ export default function DetallePresupuesto({ route }) {
     setEditarId(null);
   };
 
-return (
-  <View style={{ flex: 1, backgroundColor: "#fff" }}>
-    <FlatList
-      data={presupuestos}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={{ padding: 20 }}
-      ListHeaderComponent={
-        <View>
-          <Text style={styles.titulo}>{servicio.nombre}</Text>
+  const editar = (item) => {
+    setEmpresa(item.empresa);
+    setTipoMonto(item.tipoMonto);
+    setMonto(item.monto.toString());
+    setEditarId(item.id);
+  };
 
-          <Text style={{ marginBottom: 10, color: "#555" }}>
-            Presupuestos del último mes y del año
-          </Text>
+  const eliminarPresupuesto = (id) => {
+    Alert.alert("Confirmación", "¿Eliminar este registro?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: () =>
+          setPresupuestos((prev) => prev.filter((p) => p.id !== id)),
+      },
+    ]);
+  };
 
-          <View style={{ marginTop: -5 }}>
-            <Text style={styles.label}>Elegir empresa</Text>
+  const listaFiltrada = useMemo(() => {
+    return presupuestos.filter((item) => {
+      const [dia, mes] = item.fecha.split("/");
+
+      const mesNumero = mes.padStart(2, "0");
+
+      if (filtroEmpresa !== "todas" && item.empresa !== filtroEmpresa)
+        return false;
+
+      if (filtroMes !== "todas" && filtroMes !== mesNumero) return false;
+
+      return true;
+    });
+  }, [presupuestos, filtroEmpresa, filtroMes]);
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={listaFiltrada}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ padding: 20 }}
+        ListHeaderComponent={
+          <View>
+            <Text style={styles.titulo}>{servicio.nombre}</Text>
+
+            <Text style={styles.subtitulo}>Registro mensual</Text>
+
+            <Text style={styles.label}>Empresa</Text>
             <View style={styles.pickerContainer}>
               <Picker selectedValue={empresa} onValueChange={setEmpresa}>
                 <Picker.Item label="Selecciona una empresa" value="" />
-                <Picker.Item label="Empresa A" value="a" />
-                <Picker.Item label="Empresa B" value="b" />
+                <Picker.Item label="Empresa A" value="A" />
+                <Picker.Item label="Empresa B" value="B" />
               </Picker>
             </View>
 
-            <Text style={styles.label}>Tipo de monto</Text>
+            <Text style={styles.label}>Descripción</Text>
             <TextInput
-              placeholder="Ejemplo: Mensual, Extra, Base..."
+              placeholder="renta, servicio, etc..."
               value={tipoMonto}
               onChangeText={setTipoMonto}
               style={styles.input}
@@ -132,125 +159,247 @@ return (
 
             <Text style={styles.label}>Monto</Text>
             <TextInput
-              placeholder="Monto"
+              placeholder="$0.00"
               value={monto}
               onChangeText={setMonto}
               keyboardType="numeric"
               style={styles.input}
             />
 
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <TouchableOpacity style={styles.botonPrincipal} onPress={agregarPresupuesto}>
+              <Text style={styles.botonTexto}>{editarId ? "Actualizar" : "Agregar"}</Text>
+            </TouchableOpacity>
+
+            <View style={styles.filtrosRow}>
               <TouchableOpacity
-                onPress={agregarPresupuesto}
-                style={styles.botonAgregar}
+                onPress={() => {
+                  setFiltroEmpresa("todas");
+                  setFiltroMes("todas");
+                }}
+                style={[styles.chip, (filtroEmpresa === "todas" && filtroMes === "todas") && styles.chipActivo]}
               >
-                <Text style={{ color: "#fff" }}>
-                  {editarId ? "Actualizar" : "Agregar"}
+                <Text style={(filtroEmpresa === "todas" && filtroMes === "todas") && styles.textoChipActivo}>
+                  Todos
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={limpiar}
-                style={[styles.botonAgregar, { backgroundColor: "#999" }]}
+                onPress={() => setModalFiltros(true)}
+                style={styles.chipFiltros}
               >
-                <Text style={{ color: "#fff" }}>Cancelar</Text>
+                <Text style={{ color: "#1F64BF", fontWeight: "600" }}>
+                  Más filtros ▼
+                </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <View>
+              <Text style={styles.cardEmpresa}>Empresa {item.empresa}</Text>
+              <Text style={styles.cardDesc}>{item.tipoMonto}</Text>
+              <Text style={styles.cardMonto}>${item.monto}</Text>
+              <Text style={styles.cardFecha}>{item.fecha}</Text>
+            </View>
 
-            <Text style={[styles.titulo, { marginTop: 20 }]}>Registros</Text>
+            <View>
+              <TouchableOpacity
+                onPress={() => editar(item)}
+                style={styles.btnEditar}
+              >
+                <Text style={styles.btnTexto}>Editar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => eliminarPresupuesto(item.id)}
+                style={styles.btnEliminar}
+              >
+                <Text style={styles.btnTexto}>Eliminar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text style={styles.listaVacia}>Sin registros</Text>
+        }
+      />
+
+      <Modal transparent visible={modalFiltros} animationType="fade">
+        <View style={styles.modalFondo}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitulo}>Filtros</Text>
+
+            <Text style={styles.label}>Empresa</Text>
+            <View style={styles.modalChips}>
+              {["todas", "A", "B"].map((e) => (
+                <TouchableOpacity
+                  key={e}
+                  onPress={() => setFiltroEmpresa(e)}
+                  style={[styles.chip, filtroEmpresa === e && styles.chipActivo]}
+                >
+                  <Text style={filtroEmpresa === e && styles.textoChipActivo}>
+                    {e === "todas" ? "Todas" : e}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.label, { marginTop: 10 }]}>Mes</Text>
+            <View style={styles.modalChips}>
+              <TouchableOpacity
+                onPress={() => setFiltroMes("todas")}
+                style={[styles.chip, filtroMes === "todas" && styles.chipActivo]}
+              >
+                <Text style={filtroMes === "todas" && styles.textoChipActivo}>
+                  Todos
+                </Text>
+              </TouchableOpacity>
+
+              {meses.map(([num, nombre]) => (
+                <TouchableOpacity
+                  key={num}
+                  onPress={() => setFiltroMes(num)}
+                  style={[styles.chip, filtroMes === num && styles.chipActivo]}
+                >
+                  <Text style={filtroMes === num && styles.textoChipActivo}>
+                    {nombre}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              onPress={() => setModalFiltros(false)}
+              style={styles.botonPrincipal}
+            >
+              <Text style={styles.botonTexto}>Cerrar</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      }
-      renderItem={({ item }) => (
-        <View style={styles.item}>
-          <View>
-            <Text style={styles.itemNombre}>{item.empresa}</Text>
-            <Text>{item.tipoMonto}</Text>
-            <Text style={styles.itemMonto}>${item.monto}</Text>
-          </View>
-
-          <View style={{ flexDirection: "row" }}>
-            <TouchableOpacity
-              onPress={() => editarPresupuesto(item)}
-              style={styles.botonEditar}
-            >
-              <Text style={{ color: "#fff" }}>Editar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => eliminarPresupuesto(item.id)}
-              style={styles.botonEliminar}
-            >
-              <Text style={{ color: "#fff" }}>Eliminar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-      ListEmptyComponent={
-        <Text style={{ textAlign: "center", marginTop: 20, color: "#777" }}>
-          No hay presupuestos registrados
-        </Text>
-      }
-    />
-  </View>
-);
-
+      </Modal>
+    </View>
+  );
 }
 
+
 const styles = StyleSheet.create({
-  titulo: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 5,
-    marginTop: 10,
-  },
-  item: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#f0f0f0",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  itemNombre: { fontSize: 16, fontWeight: "700" },
-  itemMonto: { fontSize: 15, color: "#444" },
-  botonEditar: {
-    backgroundColor: "#2196F3",
-    padding: 8,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  botonEliminar: {
-    backgroundColor: "#E53935",
-    padding: 8,
-    borderRadius: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 6,
-    color: "#444",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
+
+  titulo: { fontSize: 20, fontWeight: "700" },
+  subtitulo: { color: "#555", marginBottom: 15 },
+
+  label: { marginTop: 10, fontWeight: "700" },
+
   pickerContainer: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    overflow: "hidden",
-    marginBottom: 15,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    marginTop: 5,
+    marginBottom: 10,
   },
+
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
+    borderColor: "#ddd",
+    borderRadius: 12,
     padding: 10,
-    marginBottom: 12,
+    marginTop: 5,
+    marginBottom: 10,
   },
-  botonAgregar: {
-    flex: 1,
+
+  botonPrincipal: {
     backgroundColor: "#1F64BF",
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
-    marginRight: 10,
+    marginTop: 10,
+  },
+
+  botonTexto: { color: "#fff", fontWeight: "700" },
+
+  filtrosRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+
+  chip: {
+    borderWidth: 1,
+    borderColor: "#bbb",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  chipActivo: {
+    backgroundColor: "#1F64BF",
+    borderColor: "#1F64BF",
+  },
+  textoChipActivo: { color: "#fff" },
+
+  chipFiltros: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: "#e8f0ff",
+  },
+
+  card: {
+    backgroundColor: "#f3f3f3",
+    padding: 15,
+    borderRadius: 14,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  cardEmpresa: { fontSize: 16, fontWeight: "700" },
+  cardDesc: { color: "#555" },
+  cardMonto: { fontWeight: "bold", marginTop: 5 },
+  cardFecha: { fontSize: 12, color: "#777", marginTop: 3 },
+
+  btnEditar: {
+    backgroundColor: "#2196F3",
+    padding: 7,
+    borderRadius: 10,
+    marginBottom: 5,
+  },
+
+  btnEliminar: {
+    backgroundColor: "#E53935",
+    padding: 7,
+    borderRadius: 10,
+  },
+
+  btnTexto: { color: "#fff", fontWeight: "600" },
+
+  listaVacia: {
+    textAlign: "center",
+    marginTop: 50,
+    color: "#777",
+  },
+
+  modalFondo: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+
+  modalContainer: {
+    width: "90%",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 20,
+  },
+
+  modalTitulo: { fontSize: 18, fontWeight: "700", marginBottom: 10 },
+
+  modalChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 5,
   },
 });
