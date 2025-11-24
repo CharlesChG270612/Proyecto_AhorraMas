@@ -83,8 +83,8 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#2196F3" },
-  header: { padding: 10 },
+  safeArea: { flex: 1, backgroundColor: "#2778BF" },
+  header: { padding: 50 },
   headerText: {
     color: "#fff",
     fontSize: 20,

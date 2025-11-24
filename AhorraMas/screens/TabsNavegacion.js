@@ -3,8 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Image } from "react-native";
 
 import Interfaz_Inicio from "./Interfaz_Inicio";
-import Interfaz_PresupuestosGastos from "./Interfaz_PresupuestosGastos";
-import Interfaz_HistorialTransacciones from "./Interfaz_HistorialTransacciones";
+import StackPresupuestos from "./StackPresupuestos";
 import Interfaz_Grafica from "./Interfaz_Grafica";
 import Interfaz_Movimientos from "./Interfaz_Movimientos";
 
@@ -15,7 +14,14 @@ export default function TabsNavegacion() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { height: 70, paddingBottom: 10 },
+        tabBarStyle: {
+        height: 90,
+        paddingBottom: 50,
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+    },
       }}
     >
       <Tab.Screen
@@ -30,21 +36,26 @@ export default function TabsNavegacion() {
 
       <Tab.Screen
         name="Historial"
-        component={Interfaz_HistorialTransacciones}
+        component={() => null}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault(); 
+            navigation.navigate("Interfaz_HistorialTransacciones"); 
+          },
+        })}
         options={{
           tabBarIcon: () => (
             <Image source={require("../assets/iconos/historial-de-transacciones.png")} style={{ width: 25, height: 25 }} />
           ),
         }}
       />
-
       <Tab.Screen
         name="Presupuestos"
-        component={Interfaz_PresupuestosGastos}
+        component={StackPresupuestos} 
         options={{
           tabBarIcon: () => (
             <Image source={require("../assets/iconos/presupuesto.png")} style={{ width: 25, height: 25 }} />
-          ),
+          ),headerShown: false ,
         }}
       />
 

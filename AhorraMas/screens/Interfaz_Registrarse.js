@@ -1,33 +1,53 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  Alert,
-  Image,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import {View,Text,StyleSheet,TextInput,Pressable,Alert,Image,SafeAreaView,KeyboardAvoidingView,Platform,ActivityIndicator,} from "react-native";
 
 export default function Interfaz_Registrarse({ navigation }) {
   const [usuario, setUsuario] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [cargando, setCargando] = useState(false);
 
-  const handleRegistro = () => {
-    if (!usuario.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Error", "Completa todos los campos.");
-      return;
-    }
+ const handleRegistro = () => {
+  if (!usuario.trim()) {
+    Alert.alert("Falta información", "Ingresa un nombre de usuario.");
+    return;
+  }
 
-    Alert.alert("Registrado", "Tu cuenta ha sido creada exitosamente.");
+  if (!email.trim()) {
+    Alert.alert("Falta información", "Ingresa un correo electrónico.");
+    return;
+  }
 
-    // 👉 Regresa al Login
-    navigation.replace("Login");
-  };
+  const regexEmail =
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  if (!regexEmail.test(email)) {
+    Alert.alert("Correo inválido", "Ingresa un correo electrónico válido.");
+    return;
+  }
+
+  if (!password.trim()) {
+    Alert.alert("Falta información", "Ingresa una contraseña.");
+    return;
+  }
+
+  if (password.length < 6) {
+    Alert.alert(
+      "Contraseña débil",
+      "La contraseña debe tener al menos 6 caracteres."
+    );
+    return;
+  }
+
+  setCargando(true);
+
+    setTimeout(() => {
+      setCargando(false);
+      Alert.alert("Registrado", "Tu cuenta ha sido creada exitosamente.");
+      navigation.replace("Login");
+    }, 3000);
+};
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -78,9 +98,18 @@ export default function Interfaz_Registrarse({ navigation }) {
             secureTextEntry
           />
 
-          <Pressable style={styles.button} onPress={handleRegistro}>
-            <Text style={styles.buttonText}>Guardar</Text>
-          </Pressable>
+          {cargando ? (
+            <View style={{ alignItems: "center", marginTop: 10 }}>
+              <ActivityIndicator size="large" color="#03A9F4" />
+              <Text style={{ marginTop: 10, fontSize: 16 }}>
+                Validando credenciales...
+              </Text>
+            </View>
+          ) : (
+            <Pressable style={styles.button} onPress={handleRegistro}>
+              <Text style={styles.buttonText}>Guardar</Text>
+            </Pressable>
+          )}
 
           <Pressable onPress={() => navigation.replace("Login")}>
             <Text style={styles.loginLinkText}>
@@ -94,8 +123,8 @@ export default function Interfaz_Registrarse({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#2196F3" },
-  header: { padding: 10 },
+  safeArea: { flex: 1, backgroundColor: "#2778BF" },
+  header: { padding: 50 },
   headerText: {
     color: "#fff",
     fontSize: 20,
