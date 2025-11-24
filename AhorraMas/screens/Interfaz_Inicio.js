@@ -1,22 +1,17 @@
 import React from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  ScrollView, 
-  TouchableOpacity 
+import {View,Text,StyleSheet,Image,ScrollView,TouchableOpacity,
 } from "react-native";
 
-export default function Interfaz_Inicio({ navigation }) {
+import BarraProgreso from "./components/BarraProgreso";
 
+export default function Interfaz_Inicio({ navigation }) {
   const opciones = [
     {
       id: 1,
       titulo: "Presupuestos y Gastos",
       descripcion: "Registra y controla tus gastos fácilmente.",
       imagen: require("../assets/iconos/presupuesto.png"),
-      destino: "Interfaz_PresupuestosGastos",
+      destino: { tab: "Presupuestos", screen: "ListaPresupuestos" },
     },
     {
       id: 2,
@@ -43,34 +38,57 @@ export default function Interfaz_Inicio({ navigation }) {
 
   return (
     <ScrollView style={styles.container}>
-      
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.titulo}>Ahorra+ App</Text>
-        <Text style={styles.subtitulo}>Tu asistente financiero personal</Text>
+        <View>
+          <Text style={styles.titulo}>Ahorra+ App</Text>
+          <Text style={styles.subtitulo}>Tu asistente financiero personal</Text>
+        </View>
+
+        <Image
+          source={require("../assets/iconos/Logo_Cerdo.png")}
+          style={styles.logo}
+        />
       </View>
+      <View style={styles.banner}>
+  <View style={styles.bannerLeft}>
+    <Text style={styles.bannerTitle}>¡Cuida tus finanzas!</Text>
+    <Text style={styles.bannerText}>
+      Organiza tus gastos y alcanza tus metas más rápido.
+    </Text>
+  </View>
 
-      
+  <Image
+    source={require("../assets/iconos/Banner.png")}
+    style={styles.bannerImg}
+  />
+</View>
+       
 
-      {/* Opciones */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Funciones Principales</Text>
+      <Text style={styles.sectionTitle}>Funciones Principales</Text>
 
+      <View style={styles.grid}>
         {opciones.map((item) => (
           <TouchableOpacity
             key={item.id}
             style={styles.card}
-            onPress={() => navigation.navigate(item.destino)}
+            onPress={() => {
+            if (item.destino.tab) {
+              navigation.navigate(item.destino.tab, {
+                screen: item.destino.screen,
+              });
+            } else {
+              navigation.navigate(item.destino);
+            }
+          }}
           >
             <Image source={item.imagen} style={styles.cardImage} />
-
-            <View style={styles.cardContent}>
-              <Text style={styles.cardTitle}>{item.titulo}</Text>
-              <Text style={styles.cardDesc}>{item.descripcion}</Text>
-            </View>
+            <Text style={styles.cardTitle}>{item.titulo}</Text>
+            <Text style={styles.cardDesc}>{item.descripcion}</Text>
           </TouchableOpacity>
         ))}
       </View>
+      <BarraProgreso gasto={1000} presupuesto={5000} />
+      
     </ScrollView>
   );
 }
@@ -81,10 +99,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F7FA",
     paddingHorizontal: 15,
   },
-
   header: {
     paddingVertical: 25,
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 30,
   },
   titulo: {
     fontSize: 28,
@@ -96,58 +116,92 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 5,
   },
-
-  imageContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  banner: {
-    width: 200,
-    height: 200,
+  logo: {
+    width: 70,
+    height: 70,
     resizeMode: "contain",
-  },
-
-  section: {
-    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#444",
-    marginBottom: 10,
+    marginBottom: -50,
+    marginTop: -30,
   },
-
-  card: {
+  grid: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginTop: 80,
+  },
+  card: {
+    width: "48%",
     backgroundColor: "#FFF",
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 12,
+    padding: 15,
+    borderRadius: 14,
+    marginBottom: 15,
+    alignItems: "center",
     elevation: 3,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    alignItems: "center",
   },
-
   cardImage: {
     width: 60,
     height: 60,
-    marginRight: 15,
+    marginBottom: 10,
     resizeMode: "contain",
   },
-
-  cardContent: {
-    flex: 1,
-  },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+    textAlign: "center",
   },
   cardDesc: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#666",
-    marginTop: 4,
+    textAlign: "center",
+    marginTop: 5,
   },
+   banner: {
+  backgroundColor: "#1F64BF",
+  marginTop: -10,
+  padding: 20,
+  borderRadius: 18,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  elevation: 6,
+  shadowColor: "#000",
+  shadowOpacity: 0.15,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 3 },
+
+  marginBottom: 40,
+},
+
+bannerLeft: {
+  flex: 1,
+  paddingRight: 10,
+},
+
+bannerTitle: {
+  fontSize: 18,
+  fontWeight: "bold",
+  color: "#fff",
+  marginBottom: 5,
+},
+
+bannerText: {
+  fontSize: 14,
+  color: "#F0F8FF",
+},
+
+bannerImg: {
+  width: 70,
+  height: 70,
+  resizeMode: "contain",
+},
+
 });
