@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // ✅ useEffect agregado
 import {
   View,
   Text,
@@ -12,9 +12,18 @@ import {
   Platform,
 } from "react-native";
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, route }) { // ✅ route agregado
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
+
+  // ✅ useEffect para manejar errores que vengan de ValidandoCredencialesScreen
+  useEffect(() => {
+    if (route.params?.error) {
+      Alert.alert("Error de Autenticación", route.params.error);
+      // Limpiar el parámetro de error después de mostrarlo
+      navigation.setParams({ error: undefined });
+    }
+  }, [route.params, navigation]);
 
   const handleLogin = () => {
     if (!usuario.trim() || !password.trim()) {
@@ -22,8 +31,11 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
-    //  Navega a las TABS
-    navigation.replace("Tabs");
+    // Navega a la pantalla de validación
+    navigation.navigate("ValidandoCredenciales", {
+      usuario: usuario,
+      password: password
+    });
   };
 
   return (
@@ -38,13 +50,14 @@ export default function LoginScreen({ navigation }) {
       >
         <View style={styles.formCard}>
           <Text style={styles.title}>BIENVENIDO DE NUEVO</Text>
-          <Text style={{ marginBottom: 10 }}>
+          <Text style={{ marginBottom: 10, color: "#666" }}>
             Inicia sesión para continuar
           </Text>
 
           <Image
             source={require("../assets/iconos/entrar.png")}
             style={styles.headerImage}
+            resizeMode="contain" // ✅ Usar prop resizeMode en lugar de style
           />
 
           <Text style={styles.label}>Usuario:</Text>
@@ -66,9 +79,10 @@ export default function LoginScreen({ navigation }) {
             onChangeText={setPassword}
             secureTextEntry
           />
+          
           <View style={styles.linkContainer}>
             <Pressable onPress={() => navigation.navigate("Recuperacion")}>
-            <Text style={styles.contraseñaLinkText}>Olvidaste tu contraseña</Text>
+              <Text style={styles.contraseñaLinkText}>Olvidaste tu contraseña</Text>
             </Pressable>
           </View>
 
@@ -76,7 +90,6 @@ export default function LoginScreen({ navigation }) {
             <Text style={styles.buttonText}>Iniciar Sesión</Text>
           </Pressable>
           
-
           <Pressable onPress={() => navigation.navigate("Registro")}>
             <Text style={styles.loginLinkText}>
               ¿No tienes cuenta? Regístrate aquí
@@ -89,8 +102,13 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#2778BF" },
-  header: { padding: 50 },
+  safeArea: { 
+    flex: 1, 
+    backgroundColor: "#2778BF" 
+  },
+  header: { 
+    padding: 50 
+  },
   headerText: {
     color: "#fff",
     fontSize: 20,
@@ -109,7 +127,19 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     width: "90%",
     alignItems: "center",
-    elevation: 8,
+    // ✅ Solución para el warning de shadow*
+    ...Platform.select({
+      web: {
+        boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+      },
+      default: {
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   title: {
     fontSize: 28,
@@ -150,20 +180,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   contraseñaLinkText: {
-  color: "#1976D2",
-  fontSize: 15,          
-},
-linkContainer: {
-  width: "100%",
-  alignItems: "flex-end",   
-  marginTop: 5,             
-  marginBottom: 15,         
-},
-
+    color: "#1976D2",
+    fontSize: 15,          
+  },
+  linkContainer: {
+    width: "100%",
+    alignItems: "flex-end",   
+    marginTop: 5,             
+    marginBottom: 15,         
+  },
   headerImage: {
     width: 90,
     height: 90,
     marginBottom: 20,
-    resizeMode: "contain",
+    // ✅ resizeMode se usa como prop, no en styles
   },
 });

@@ -5,6 +5,7 @@ import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
 import Interfaz_RecuperacionContraseña from "./screens/Interfaz_RecuperacionContraseña";
 import Interfaz_Registrarse from "./screens/Interfaz_Registrarse";
+import ValidandoCredencialesScreen from './screens/ValidandoCredencialesScreen';
 import TabsNavegacion from "./screens/TabsNavegacion";
 import Interfaz_HistorialTransacciones from "./screens/Interfaz_HistorialTransacciones";
 import Interfaz_Grafica from "./screens/Interfaz_Grafica";
@@ -24,6 +25,7 @@ export default function App() {
           <Stack.Screen name="Recuperacion" component={Interfaz_RecuperacionContraseña} />
 
           <Stack.Screen name="Registro" component={Interfaz_Registrarse} />
+          <Stack.Screen name="ValidandoCredenciales" component={ValidandoCredencialesScreen} options={{ headerShown: false }}/>
 
           <Stack.Screen name="Tabs" component={TabsNavegacion} />
 
