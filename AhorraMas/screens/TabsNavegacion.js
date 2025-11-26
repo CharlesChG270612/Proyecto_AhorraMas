@@ -5,7 +5,6 @@ import { Image } from "react-native";
 import Interfaz_Inicio from "./Interfaz_Inicio";
 import StackPresupuestos from "./StackPresupuestos";
 import Interfaz_Grafica from "./Interfaz_Grafica";
-import Interfaz_Notificaciones from "./Interfaz_Notificaciones";
 
 const Tab = createBottomTabNavigator();
 
@@ -15,13 +14,13 @@ export default function TabsNavegacion() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-        height: 90,
-        paddingBottom: 50,
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-    },
+          height: 90,
+          paddingBottom: 50,
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+        },
       }}
     >
       <Tab.Screen
@@ -39,8 +38,8 @@ export default function TabsNavegacion() {
         component={() => null}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
-            e.preventDefault(); 
-            navigation.navigate("Interfaz_HistorialTransacciones"); 
+            e.preventDefault();
+            navigation.navigate("Interfaz_HistorialTransacciones");
           },
         })}
         options={{
@@ -49,13 +48,14 @@ export default function TabsNavegacion() {
           ),
         }}
       />
+
       <Tab.Screen
         name="Presupuestos"
-        component={StackPresupuestos} 
+        component={StackPresupuestos}
         options={{
           tabBarIcon: () => (
             <Image source={require("../assets/iconos/presupuesto.png")} style={{ width: 25, height: 25 }} />
-          ),headerShown: false ,
+          ),
         }}
       />
 
@@ -65,16 +65,6 @@ export default function TabsNavegacion() {
         options={{
           tabBarIcon: () => (
             <Image source={require("../assets/iconos/graficas.png")} style={{ width: 25, height: 25 }} />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="Notificaciones"
-        component={Interfaz_Notificaciones}
-        options={{
-          tabBarIcon: () => (
-            <Image source={require("../assets/iconos/notificaciones.png")} style={{ width: 25, height: 25 }} />
           ),
         }}
       />
