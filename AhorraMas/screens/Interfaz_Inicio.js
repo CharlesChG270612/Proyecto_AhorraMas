@@ -30,7 +30,7 @@ export default function Interfaz_Inicio({ navigation }) {
     {
       id: 4,
       titulo: "Notificaciones",
-      descripcion: "Agrega ingresos y egresos fácilmente.",
+      descripcion: "Tienes una nueva notificacion.",
       imagen: require("../assets/iconos/notificaciones.png"),
       destino: "Interfaz_Notificaciones",
     },
