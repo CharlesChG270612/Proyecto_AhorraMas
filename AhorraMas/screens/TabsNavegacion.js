@@ -5,7 +5,7 @@ import { Image } from "react-native";
 import Interfaz_Inicio from "./Interfaz_Inicio";
 import StackPresupuestos from "./StackPresupuestos";
 import Interfaz_Grafica from "./Interfaz_Grafica";
-import Interfaz_Movimientos from "./Interfaz_Movimientos";
+import Interfaz_Notificaciones from "./Interfaz_Notificaciones";
 
 const Tab = createBottomTabNavigator();
 
@@ -70,11 +70,11 @@ export default function TabsNavegacion() {
       />
 
       <Tab.Screen
-        name="Movimientos"
-        component={Interfaz_Movimientos}
+        name="Notificaciones"
+        component={Interfaz_Notificaciones}
         options={{
           tabBarIcon: () => (
-            <Image source={require("../assets/iconos/movimientos.png")} style={{ width: 25, height: 25 }} />
+            <Image source={require("../assets/iconos/notificaciones.png")} style={{ width: 25, height: 25 }} />
           ),
         }}
       />

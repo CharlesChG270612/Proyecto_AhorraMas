@@ -29,10 +29,10 @@ export default function Interfaz_Inicio({ navigation }) {
     },
     {
       id: 4,
-      titulo: "Movimientos",
+      titulo: "Notificaciones",
       descripcion: "Agrega ingresos y egresos fácilmente.",
-      imagen: require("../assets/iconos/movimientos.png"),
-      destino: "Interfaz_Movimientos",
+      imagen: require("../assets/iconos/notificaciones.png"),
+      destino: "Interfaz_Notificaciones",
     },
   ];
 
