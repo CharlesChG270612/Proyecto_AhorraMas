@@ -22,7 +22,7 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
-    // 👉 Navega a las TABS
+    //  Navega a las TABS
     navigation.replace("Tabs");
   };
 

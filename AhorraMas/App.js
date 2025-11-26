@@ -8,7 +8,7 @@ import Interfaz_Registrarse from "./screens/Interfaz_Registrarse";
 import TabsNavegacion from "./screens/TabsNavegacion";
 import Interfaz_HistorialTransacciones from "./screens/Interfaz_HistorialTransacciones";
 import Interfaz_Grafica from "./screens/Interfaz_Grafica";
-import Interfaz_Movimientos from "./screens/Interfaz_Movimientos";
+import Interfaz_Notificaciones from "./screens/Interfaz_Notificaciones";
 
 const Stack = createNativeStackNavigator();
 
@@ -31,7 +31,7 @@ export default function App() {
 
           <Stack.Screen name="Interfaz_Grafica" component={Interfaz_Grafica} />
 
-          <Stack.Screen name="Interfaz_Movimientos" component={Interfaz_Movimientos} />
+          <Stack.Screen name="Interfaz_Notificaciones" component={Interfaz_Notificaciones} />
 
         </Stack.Navigator>
       </NavigationContainer>
