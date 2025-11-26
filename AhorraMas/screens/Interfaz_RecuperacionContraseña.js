@@ -5,41 +5,46 @@ import {
   StyleSheet,
   TextInput,
   Pressable,
-  Alert,
+  Alert, 
   Image,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
 
-export default function LoginScreen({ navigation }) {
-  const [usuario, setUsuario] = useState("");
-  const [password, setPassword] = useState("");
+export default function Interfaz_RecuperacionContraseña({ navigation }) {
+  const [email, setEmail] = useState("");
+
+  
+  
 
   const handleLogin = () => {
-    if (!usuario.trim() || !password.trim()) {
-      Alert.alert("Error", "Completa Usuario y Contraseña.");
+
+    const regexEmail =
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  
+    if (!regexEmail.test(email)) {
+      Alert.alert("Correo inválido", "Ingresa un correo electrónico válido.");
       return;
     }
-
-    // 👉 Navega a las TABS
-    navigation.replace("Tabs");
+    else{
+        Alert.alert(
+      "Correo Enviado","Revisa tu correo"
+    );
+    navigation.navigate("Login"); 
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Inicia Sesión</Text>
-      </View>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
         <View style={styles.formCard}>
-          <Text style={styles.title}>BIENVENIDO DE NUEVO</Text>
+          <Text style={styles.title}>Restablecer contraseña</Text>
           <Text style={{ marginBottom: 10 }}>
-            Inicia sesión para continuar
+            Al presionar "Confirmar" se le enviará un correo con un link para restablecer la contraseña.
           </Text>
 
           <Image
@@ -47,41 +52,21 @@ export default function LoginScreen({ navigation }) {
             style={styles.headerImage}
           />
 
-          <Text style={styles.label}>Usuario:</Text>
+          <Text style={styles.label}>Correo:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Usuario"
+            placeholder="Correo"
             placeholderTextColor="#999"
-            value={usuario}
-            onChangeText={setUsuario}
+            value={email}
+            onChangeText={setEmail}
             autoCapitalize="none"
+            keyboardType="email-address" 
           />
-
-          <Text style={styles.label}>Contraseña:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Contraseña"
-            placeholderTextColor="#999"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          <View style={styles.linkContainer}>
-            <Pressable onPress={() => navigation.navigate("Recuperacion")}>
-            <Text style={styles.contraseñaLinkText}>Olvidaste tu contraseña</Text>
-            </Pressable>
-          </View>
 
           <Pressable style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            <Text style={styles.buttonText}>Confirmar</Text>
           </Pressable>
-          
 
-          <Pressable onPress={() => navigation.navigate("Registro")}>
-            <Text style={styles.loginLinkText}>
-              ¿No tienes cuenta? Regístrate aquí
-            </Text>
-          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -149,17 +134,6 @@ const styles = StyleSheet.create({
     color: "#1976D2",
     fontSize: 15,
   },
-  contraseñaLinkText: {
-  color: "#1976D2",
-  fontSize: 15,          
-},
-linkContainer: {
-  width: "100%",
-  alignItems: "flex-end",   
-  marginTop: 5,             
-  marginBottom: 15,         
-},
-
   headerImage: {
     width: 90,
     height: 90,

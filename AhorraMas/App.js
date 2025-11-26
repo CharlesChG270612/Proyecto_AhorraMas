@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
+import Interfaz_RecuperacionContraseña from "./screens/Interfaz_RecuperacionContraseña";
 import Interfaz_Registrarse from "./screens/Interfaz_Registrarse";
 import TabsNavegacion from "./screens/TabsNavegacion";
 import Interfaz_HistorialTransacciones from "./screens/Interfaz_HistorialTransacciones";
@@ -19,6 +20,8 @@ export default function App() {
           <Stack.Screen name="Splash" component={SplashScreen} />
 
           <Stack.Screen name="Login" component={LoginScreen} />
+
+          <Stack.Screen name="Recuperacion" component={Interfaz_RecuperacionContraseña} />
 
           <Stack.Screen name="Registro" component={Interfaz_Registrarse} />
 
