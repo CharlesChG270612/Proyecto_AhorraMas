@@ -22,11 +22,12 @@ export default function ValidandoCredencialesScreen({ navigation, route }) {
                                    password.length >= 3;
         
         if (credencialesValidas) {
-          navigation.replace("Tabs");
-        } else {
-          navigation.replace("Login", { 
-            error: "Usuario o contraseña incorrectos" 
-          });
+         navigation.replace("Tabs", {
+  nombre: usuario,
+  email: usuario + "@gmail.com",
+  telefono: "5512345678",
+  userId: "ID-" + Math.floor(Math.random() * 9999),
+           });
         }
         
       } catch (error) {
