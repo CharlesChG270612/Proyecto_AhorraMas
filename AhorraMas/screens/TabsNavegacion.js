@@ -61,13 +61,19 @@ export default function TabsNavegacion() {
 
       <Tab.Screen
         name="Gráfica"
-        component={Interfaz_Grafica}
+        component={() => null}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate("Interfaz_Grafica");
+          },
+        })}
         options={{
           tabBarIcon: () => (
             <Image source={require("../assets/iconos/graficas.png")} style={{ width: 25, height: 25 }} />
           ),
-        }}
-      />
+        }}
+      />
     </Tab.Navigator>
   );
 }

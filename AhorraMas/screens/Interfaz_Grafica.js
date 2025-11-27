@@ -290,6 +290,24 @@ const MenuTipoGrafica = ({ tipoSeleccionado, onSeleccionar }) => {
 };
 
 export default function Interfaz_Grafica({ navigation }) {
+
+  useEffect(() => {
+    const parent = navigation.getParent();
+    if (!parent) return;
+    parent.setOptions({ tabBarStyle: { display: "none" } });
+    return () =>
+      parent.setOptions({
+        tabBarStyle: {
+          height: 90,
+          paddingBottom: 50,
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+        },
+      });
+  }, []);
+  
   const [tipo, setTipo] = useState('ingresos');
   const [periodo, setPeriodo] = useState('mes');
   const [tipoGrafica, setTipoGrafica] = useState('barras');
