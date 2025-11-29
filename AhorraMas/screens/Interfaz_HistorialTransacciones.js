@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Image, Alert, Modal } from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Image, Alert, Modal, ActivityIndicator } from "react-native";
+import ControladorTransacciones from '../controllers/ControladorTransacciones';
+import ControladorAutenticacion from '../controllers/ControladorAutenticacion';
 
 export default function Interfaz_HistorialTransacciones({ navigation }) {
   useEffect(() => {
@@ -19,6 +21,7 @@ export default function Interfaz_HistorialTransacciones({ navigation }) {
       });
   }, []);
 
+  const [usuario, setUsuario] = useState(null);
   const [transacciones, setTransacciones] = useState([]);
   const [filtro, setFiltro] = useState("todos");
   const [modalVisible, setModalVisible] = useState(false);
@@ -31,53 +34,187 @@ export default function Interfaz_HistorialTransacciones({ navigation }) {
   const [descripcion, setDescripcion] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState("todas");
   const [filtroFecha, setFiltroFecha] = useState("todas");
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    verificarYcargarUsuario();
+  }, []);
+
+  useEffect(() => {
+    if (usuario) {
+      cargarTransacciones();
+    }
+  }, [usuario, filtro, filtroCategoria, filtroFecha]);
+
+  const verificarYcargarUsuario = async () => {
+    try {
+      const usuarioActual = await ControladorAutenticacion.obtenerUsuarioActual();
+      
+      if (!usuarioActual) {
+        Alert.alert("Sesión expirada", "Por favor inicia sesión nuevamente");
+        navigation.navigate('Login');
+        return;
+      }
+      
+      setUsuario(usuarioActual);
+    } catch (error) {
+      console.error('Error verificando usuario:', error);
+      Alert.alert("Error", "No se pudo verificar la sesión");
+    }
+  };
+
+  const cargarTransacciones = async () => {
+    if (!usuario) {
+      console.log('DEBUG: No hay usuario para cargar transacciones');
+      return;
+    }
+    
+    setCargando(true);
+    try {
+      const filtros = {
+        tipo: filtro === 'todos' ? null : filtro,
+        categoria: filtroCategoria === 'todas' ? null : filtroCategoria,
+        fecha: filtroFecha === 'todas' ? null : filtroFecha
+      };
+
+      console.log('DEBUG: Llamando a ControladorTransacciones.obtenerTransaccionesUsuario');
+      console.log('DEBUG: usuario.id =', usuario.id);
+      console.log('DEBUG: filtros =', filtros);
+
+      const resultado = await ControladorTransacciones.obtenerTransaccionesUsuario(usuario.id, filtros);
+      
+      console.log('DEBUG: Resultado completo del controlador:', resultado);
+      console.log('DEBUG: resultado.exito =', resultado.exito);
+      console.log('DEBUG: resultado.mensaje =', resultado.mensaje);
+      console.log('DEBUG: resultado.datos =', resultado.datos);
+      console.log('DEBUG: Tipo de resultado.datos =', typeof resultado.datos);
+      console.log('DEBUG: Es array?', Array.isArray(resultado.datos));
+      
+      if (resultado.exito) {
+        console.log('DEBUG: Transacciones cargadas exitosamente:', resultado.datos);
+        console.log('DEBUG: Cantidad de transacciones:', resultado.datos?.length || 0);
+        setTransacciones(resultado.datos || []);
+      } else {
+        console.log('DEBUG: Error del controlador:', resultado.mensaje);
+        Alert.alert("Error", resultado.mensaje);
+        setTransacciones([]);
+      }
+    } catch (error) {
+      console.error('DEBUG: Error cargando transacciones:', error);
+      Alert.alert("Error", "No se pudieron cargar las transacciones");
+      setTransacciones([]);
+    } finally {
+      setCargando(false);
+    }
+  };
 
   const abrirModalEdicion = (item) => {
-    setNombre(item.nombre);
-    setCategoria(item.categoria);
-    setMonto(item.monto.toString());
-    setTipo(item.tipo);
-    setDescripcion(item.descripcion);
+    if (!item || !item.id) {
+      Alert.alert("Error", "Transacción no válida");
+      return;
+    }
+    
+    console.log('DEBUG: Abriendo modal para editar transacción:', item);
+    
+    setNombre(item.nombre || "");
+    setCategoria(item.categoria || "");
+    setMonto(item.monto ? item.monto.toString() : "");
+    setTipo(item.tipo || "gasto");
+    setDescripcion(item.descripcion || "");
     setEditarId(item.id);
     setModalVisible(true);
   };
 
-  const guardarTransaccion = () => {
+  const guardarTransaccion = async () => {
     if (!nombre || !categoria || !monto || !descripcion) {
       Alert.alert("Datos incompletos", "Todos los campos son obligatorios.");
       return;
     }
 
-    if (editarId) {
-      Alert.alert("Confirmación", "¿Actualizar transacción?", [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Actualizar",
-          onPress: () => {
-            setTransacciones((prev) =>
-              prev.map((item) =>
-                item.id === editarId
-                  ? { ...item, nombre, categoria, monto: parseFloat(monto), tipo, descripcion }
-                  : item
-              )
-            );
-            limpiarCampos();
-          },
-        },
-      ]);
-    } else {
-      const nueva = {
-        id: Date.now().toString(),
-        nombre,
-        categoria,
-        monto: parseFloat(monto),
-        tipo,
-        descripcion,
-        fecha: new Date().toLocaleDateString(),
-      };
-      setTransacciones((prev) => [...prev, nueva]);
-      limpiarCampos();
+    if (!usuario) {
+      Alert.alert("Error", "No se encontró el usuario");
+      return;
     }
+
+    const montoNumerico = parseFloat(monto);
+    if (isNaN(montoNumerico) || montoNumerico <= 0) {
+      Alert.alert("Error", "El monto debe ser un número mayor a 0");
+      return;
+    }
+
+    const datosTransaccion = {
+      usuario_id: usuario.id,
+      nombre: nombre.trim(),
+      categoria: categoria.trim(),
+      descripcion: descripcion.trim(),
+      monto: montoNumerico,
+      tipo,
+      fecha: new Date().toISOString().split('T')[0]
+    };
+
+    console.log('DEBUG: Enviando datos al controlador:', datosTransaccion);
+
+    try {
+      let resultado;
+      
+      if (editarId) {
+        console.log('DEBUG: Editando transacción existente');
+        resultado = await ControladorTransacciones.actualizarTransaccion(editarId, datosTransaccion);
+      } else {
+        console.log('DEBUG: Creando nueva transacción');
+        resultado = await ControladorTransacciones.crearTransaccion(datosTransaccion);
+      }
+      
+      console.log('DEBUG: Respuesta del controlador:', resultado);
+      
+      if (resultado.exito) {
+        Alert.alert("Éxito", resultado.mensaje);
+        console.log('DEBUG: Recargando transacciones después de guardar...');
+        await cargarTransacciones();
+        limpiarCampos();
+      } else {
+        Alert.alert("Error", resultado.mensaje);
+      }
+    } catch (error) {
+      console.error('DEBUG: Error guardando transacción:', error);
+      Alert.alert("Error", "Error al guardar la transacción");
+    }
+  };
+
+  const eliminarTransaccion = async (id) => {
+    if (!id) {
+      Alert.alert("Error", "ID de transacción no válido");
+      return;
+    }
+
+    console.log('DEBUG: Intentando eliminar transacción ID:', id);
+
+    Alert.alert("Confirmación", "¿Eliminar transacción permanentemente?", [
+      { text: "Cancelar", style: "cancel" },
+      { 
+        text: "Eliminar", 
+        style: "destructive", 
+        onPress: async () => {
+          try {
+            console.log('DEBUG: Ejecutando eliminación de transacción ID:', id);
+            const resultado = await ControladorTransacciones.eliminarTransaccion(id);
+            
+            console.log('DEBUG: Resultado de eliminación:', resultado);
+            
+            if (resultado.exito) {
+              Alert.alert("Éxito", resultado.mensaje);
+              console.log('DEBUG: Recargando transacciones después de eliminar...');
+              cargarTransacciones();
+            } else {
+              Alert.alert("Error", resultado.mensaje);
+            }
+          } catch (error) {
+            console.error('DEBUG: Error eliminando transacción:', error);
+            Alert.alert("Error", "Error al eliminar la transacción");
+          }
+        }
+      },
+    ]);
   };
 
   const limpiarCampos = () => {
@@ -90,42 +227,47 @@ export default function Interfaz_HistorialTransacciones({ navigation }) {
     setModalVisible(false);
   };
 
-  const eliminarTransaccion = (id) => {
-    Alert.alert("Confirmación", "¿Eliminar transacción?", [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Eliminar", style: "destructive", onPress: () => setTransacciones((prev) => prev.filter((t) => t.id !== id)) },
-    ]);
+  const limpiarFiltros = () => {
+    setFiltro("todos");
+    setFiltroCategoria("todas");
+    setFiltroFecha("todas");
   };
 
-  const categoriasDisponibles = [...new Set(transacciones.map((t) => t.categoria))];
-  const fechasDisponibles = [...new Set(transacciones.map((t) => t.fecha))];
+  const categoriasDisponibles = [...new Set(transacciones.map((t) => t.categoria).filter(Boolean))];
+  const fechasDisponibles = [...new Set(transacciones.map((t) => t.fecha).filter(Boolean))];
 
   const transaccionesFiltradas = transacciones.filter((item) => {
+    if (!item || !item.id) return false;
+    
     const f1 = filtro === "todos" ? true : item.tipo === filtro;
     const f2 = filtroCategoria === "todas" ? true : item.categoria === filtroCategoria;
     const f3 = filtroFecha === "todas" ? true : item.fecha === filtroFecha;
     return f1 && f2 && f3;
   });
 
-  const renderTransaccion = ({ item }) => (
-    <TouchableOpacity onPress={() => abrirModalEdicion(item)}>
-      <View style={estilos.tarjeta}>
-        <Image source={require("../assets/iconos/persona.png")} style={estilos.imagen} />
-        <View style={estilos.info}>
-          <Text style={estilos.nombre}>{item.nombre}</Text>
-          <Text style={estilos.categoria}>{item.categoria}</Text>
-          <Text style={{ fontSize: 12, color: "#727272ff" }}>{item.descripcion}</Text>
-          <Text style={estilos.fecha}>{item.fecha}</Text>
+  const renderTransaccion = ({ item }) => {
+    if (!item || !item.id) return null;
+
+    return (
+      <TouchableOpacity onPress={() => abrirModalEdicion(item)}>
+        <View style={estilos.tarjeta}>
+          <Image source={require("../assets/iconos/persona.png")} style={estilos.imagen} />
+          <View style={estilos.info}>
+            <Text style={estilos.nombre}>{item.nombre || "Sin nombre"}</Text>
+            <Text style={estilos.categoria}>{item.categoria || "Sin categoría"}</Text>
+            <Text style={{ fontSize: 12, color: "#727272ff" }}>{item.descripcion || "Sin descripción"}</Text>
+            <Text style={estilos.fecha}>{item.fecha || "Sin fecha"}</Text>
+          </View>
+          <Text style={[estilos.monto, { color: item.tipo === "ingreso" ? "#2ecc71" : "#e63946" }]}>
+            {item.tipo === "ingreso" ? `+ $${item.monto || 0}` : `- $${item.monto || 0}`}
+          </Text>
+          <TouchableOpacity onPress={() => eliminarTransaccion(item.id)}>
+            <Text style={{ color: "red", marginLeft: 10 }}>Eliminar</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={[estilos.monto, { color: item.tipo === "ingreso" ? "#2ecc71" : "#e63946" }]}>
-          {item.tipo === "ingreso" ? `+ $${item.monto}` : `- $${item.monto}`}
-        </Text>
-        <TouchableOpacity onPress={() => eliminarTransaccion(item.id)}>
-          <Text style={{ color: "red", marginLeft: 10 }}>Eliminar</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={estilos.contenedorPrincipal}>
@@ -135,8 +277,8 @@ export default function Interfaz_HistorialTransacciones({ navigation }) {
             <Image source={require("../assets/iconos/flecha-izquierda.png")} style={estilos.iconoAtras} />
           </TouchableOpacity>
           <Text style={estilos.titulo}>Transacciones recientes</Text>
-          <TouchableOpacity>
-            <Image source={require("../assets/iconos/buscar.png")} style={estilos.iconoSuperior} />
+          <TouchableOpacity onPress={cargarTransacciones}>
+            <Image source={require("../assets/iconos/actualizar.png")} style={estilos.iconoSuperior} />
           </TouchableOpacity>
         </View>
 
@@ -158,18 +300,30 @@ export default function Interfaz_HistorialTransacciones({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          data={transaccionesFiltradas}
-          keyExtractor={(item) => item.id}
-          renderItem={renderTransaccion}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 150 }}
-          ListEmptyComponent={
-            <View style={{ alignItems: "center", marginTop: 300 }}>
-              <Text style={{ color: "#777", fontSize: 16 }}>No hay transacciones</Text>
-            </View>
-          }
-        />
+        {cargando ? (
+          <View style={estilos.contenedorCarga}>
+            <ActivityIndicator size="large" color="#1F64BF" />
+            <Text style={estilos.textoCarga}>Cargando transacciones...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={transaccionesFiltradas}
+            keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
+            renderItem={renderTransaccion}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 150 }}
+            ListEmptyComponent={
+              <View style={estilos.contenedorVacio}>
+                <Text style={estilos.textoVacio}>No hay transacciones</Text>
+                <Text style={estilos.subtextoVacio}>
+                  {filtro !== "todos" || filtroCategoria !== "todas" || filtroFecha !== "todas" 
+                    ? "Intenta con otros filtros" 
+                    : "Agrega tu primera transacción"}
+                </Text>
+              </View>
+            }
+          />
+        )}
 
         <TouchableOpacity style={estilos.btnModal} onPress={() => setModalVisible(true)}>
           <Text style={{ color: "#fff", fontWeight: "bold" }}>+ Agregar</Text>
@@ -214,7 +368,11 @@ export default function Interfaz_HistorialTransacciones({ navigation }) {
                 ))}
               </View>
 
-              <TouchableOpacity onPress={() => setModalFiltros(false)} style={[estilos.btnAgregar, { marginTop: 20 }]}>
+              <TouchableOpacity onPress={limpiarFiltros} style={[estilos.btnSecundario, { marginTop: 10 }]}>
+                <Text style={{ color: "#1F64BF" }}>Limpiar Filtros</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setModalFiltros(false)} style={[estilos.btnAgregar, { marginTop: 10 }]}>
                 <Text style={{ color: "#fff" }}>Cerrar</Text>
               </TouchableOpacity>
             </View>
@@ -263,7 +421,7 @@ const estilos = StyleSheet.create({
   btnAtras: { padding: 5 },
   iconoAtras: { width: 25, height: 25 },
   titulo: { fontSize: 20, fontWeight: "700", color: "#1a1a1a" },
-  iconoSuperior: { width: 28, height: 28 },
+  iconoSuperior: { width: 20, height: 20 },
   filaFiltros: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 5 },
   filtroChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1, borderColor: "#ccc", marginRight: 5 },
   chipActivo: { backgroundColor: "#1F64BF", borderColor: "#1F64BF" },
@@ -287,4 +445,36 @@ const estilos = StyleSheet.create({
   tipoBtnActivo: { backgroundColor: "#1F64BF", borderColor: "#1F64BF" },
   btnAgregar: { backgroundColor: "#1F64BF", padding: 12, borderRadius: 10, alignItems: "center" },
   listadoFiltros: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 5 },
+  contenedorCarga: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50
+  },
+  textoCarga: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 16
+  },
+  contenedorVacio: {
+    alignItems: "center", 
+    marginTop: 100,
+    padding: 20
+  },
+  textoVacio: { 
+    color: "#777", 
+    fontSize: 16,
+    marginBottom: 8
+  },
+  subtextoVacio: {
+    color: "#aaa",
+    fontSize: 14,
+    textAlign: 'center'
+  },
+  btnSecundario: { 
+    backgroundColor: "#f0f0f0", 
+    padding: 12, 
+    borderRadius: 10, 
+    alignItems: "center" 
+  }
 });

@@ -68,8 +68,10 @@ class ControladorPresupuestos {
 
   async establecerPresupuestoMensual(usuarioId, monto) {
     const fechaActual = new Date();
-    const mes = fechaActual.getMonth() + 1; // 1-12
+    const mes = fechaActual.getMonth() + 1;
     const año = fechaActual.getFullYear();
+
+    console.log('DEBUG ControladorPresupuestos.establecerPresupuestoMensual:', { usuarioId, monto, mes, año });
 
     if (monto <= 0) {
       return { exito: false, mensaje: 'El presupuesto debe ser mayor a 0' };
@@ -78,26 +80,69 @@ class ControladorPresupuestos {
     try {
       const resultado = await Presupuesto.establecerPresupuestoMensual(usuarioId, monto, mes, año);
       
+      console.log('DEBUG ControladorPresupuestos.establecerPresupuestoMensual - resultado:', resultado);
+      
       if (resultado.exito) {
         return { exito: true, mensaje: 'Presupuesto mensual guardado exitosamente' };
       } else {
         return { exito: false, mensaje: resultado.error };
       }
     } catch (error) {
+      console.error('DEBUG ControladorPresupuestos.establecerPresupuestoMensual - error:', error);
       return { exito: false, mensaje: 'Error del servidor: ' + error.message };
     }
   }
 
   async obtenerPresupuestoMensual(usuarioId) {
-    const fechaActual = new Date();
-    const mes = fechaActual.getMonth() + 1;
-    const año = fechaActual.getFullYear();
-
     try {
-      const presupuesto = await Presupuesto.obtenerPresupuestoMensual(usuarioId, mes, año);
+      console.log('DEBUG ControladorPresupuestos.obtenerPresupuestoMensual:', usuarioId);
+      
+      const presupuesto = await Presupuesto.obtenerPresupuestoMensualActual(usuarioId);
+      
+      console.log('DEBUG ControladorPresupuestos.obtenerPresupuestoMensual - resultado:', presupuesto);
+      
       return { exito: true, datos: presupuesto };
     } catch (error) {
+      console.error('DEBUG ControladorPresupuestos.obtenerPresupuestoMensual - error:', error);
       return { exito: false, mensaje: error.message, datos: null };
+    }
+  }
+
+  async obtenerResumenMensual(usuarioId) {
+    try {
+      console.log('DEBUG ControladorPresupuestos.obtenerResumenMensual:', usuarioId);
+      
+      const presupuesto = await Presupuesto.obtenerPresupuestoMensualActual(usuarioId);
+      const gastosTotales = await Presupuesto.obtenerTotalGastosMensual(usuarioId);
+      
+      console.log('DEBUG ControladorPresupuestos.obtenerResumenMensual - datos:', {
+        presupuesto: presupuesto?.monto || 0,
+        gastosTotales,
+        restante: (presupuesto?.monto || 0) - gastosTotales
+      });
+      
+      return {
+        exito: true,
+        datos: {
+          presupuesto: presupuesto?.monto || 0,
+          gastosTotales: gastosTotales,
+          restante: (presupuesto?.monto || 0) - gastosTotales,
+          porcentajeUsado: presupuesto?.monto ? (gastosTotales / presupuesto.monto) * 100 : 0
+        }
+      };
+    } catch (error) {
+      console.error('DEBUG ControladorPresupuestos.obtenerResumenMensual - error:', error);
+      
+      // Si hay error, retornar datos por defecto
+      return {
+        exito: true,
+        datos: {
+          presupuesto: 0,
+          gastosTotales: 0,
+          restante: 0,
+          porcentajeUsado: 0
+        }
+      };
     }
   }
 }

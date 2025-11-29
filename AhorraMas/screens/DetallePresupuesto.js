@@ -1,28 +1,64 @@
-import React, { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Alert,
-  Modal,
-} from "react-native";
+import React, { useState, useMemo, useEffect } from "react";
+import {View,Text,TextInput,TouchableOpacity,FlatList,StyleSheet,Alert,Modal,} from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import ControladorPresupuestos from '../controllers/ControladorPresupuestos';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DetallePresupuesto({ route }) {
-  const { servicio } = route.params;
+  const { servicio, usuario, onGastoAgregado } = route.params;
 
   const [empresa, setEmpresa] = useState("");
   const [tipoMonto, setTipoMonto] = useState("");
   const [monto, setMonto] = useState("");
   const [presupuestos, setPresupuestos] = useState([]);
   const [editarId, setEditarId] = useState(null);
-
   const [modalFiltros, setModalFiltros] = useState(false);
   const [filtroEmpresa, setFiltroEmpresa] = useState("todas");
   const [filtroMes, setFiltroMes] = useState("todas");
+
+  useEffect(() => {
+    cargarPresupuestos();
+  }, [usuario]);
+
+  const cargarPresupuestos = async () => {
+    try {
+      if (!usuario || !usuario.id) {
+        console.log('DEBUG: No hay usuario para cargar presupuestos');
+        return;
+      }
+
+      const resultado = await ControladorPresupuestos.obtenerPresupuestosUsuario(usuario.id);
+      
+      if (resultado.exito) {
+        const presupuestosFiltrados = resultado.datos.filter(p => 
+          p.servicio_nombre === servicio.nombre
+        );
+        setPresupuestos(presupuestosFiltrados);
+      } else {
+        const claves = await AsyncStorage.getAllKeys();
+        const clavesPresupuestos = claves.filter(key => 
+          key.startsWith('ahorraplus_presupuestos_')
+        );
+        
+        const items = await AsyncStorage.multiGet(clavesPresupuestos);
+        const presupuestosCargados = items.map(([key, value]) => {
+          try {
+            const presupuesto = JSON.parse(value);
+            return presupuesto;
+          } catch (error) {
+            return null;
+          }
+        }).filter(Boolean).filter(p => 
+          p.servicio_nombre === servicio.nombre && 
+          p.usuario_id === usuario.id
+        );
+        
+        setPresupuestos(presupuestosCargados);
+      }
+    } catch (error) {
+      console.error('Error cargando presupuestos:', error);
+    }
+  };
 
   const meses = [
     ["01", "Enero"],
@@ -60,31 +96,76 @@ export default function DetallePresupuesto({ route }) {
     return true;
   };
 
-  const agregarPresupuesto = () => {
+  const crearNotificacionGasto = async (servicioNombre, monto) => {
+    try {
+      const notificacion = {
+        id: Date.now().toString(),
+        usuario_id: usuario.id,
+        tipo: 'gasto_registrado',
+        titulo: 'Gasto Registrado',
+        mensaje: `Se registró un gasto de $${monto} para ${servicioNombre}`,
+        fecha: new Date().toISOString(),
+        leida: false
+      };
+      
+      await AsyncStorage.setItem(
+        `ahorraplus_notificaciones_${notificacion.id}`,
+        JSON.stringify(notificacion)
+      );
+    } catch (error) {
+      console.error('Error creando notificación:', error);
+    }
+  };
+
+  const agregarPresupuesto = async () => {
     if (!validarCampos()) return;
 
-    const montoNum = Number(monto);
-
-    if (editarId) {
-      setPresupuestos((prev) =>
-        prev.map((p) =>
-          p.id === editarId
-            ? { ...p, empresa, tipoMonto, monto: montoNum }
-            : p
-        )
-      );
-    } else {
-      const nuevo = {
-        id: Date.now().toString(),
-        empresa,
-        tipoMonto,
-        monto: montoNum,
-        fecha: new Date().toLocaleDateString("es-ES"),
-      };
-      setPresupuestos((prev) => [...prev, nuevo]);
+    if (!usuario || !usuario.id) {
+      Alert.alert("Error", "Usuario no encontrado");
+      return;
     }
 
-    limpiar();
+    const montoNum = Number(monto);
+    const fechaActual = new Date().toISOString().split('T')[0];
+
+    try {
+      if (editarId) {
+        const resultado = await ControladorPresupuestos.actualizarPresupuesto(editarId, {
+          empresa,
+          tipo_monto: tipoMonto,
+          monto: montoNum
+        });
+
+        if (resultado.exito) {
+          await cargarPresupuestos();
+          Alert.alert("Éxito", resultado.mensaje);
+        } else {
+          Alert.alert("Error", resultado.mensaje);
+        }
+      } else {
+        const resultado = await ControladorPresupuestos.crearPresupuesto({
+          usuario_id: usuario.id,
+          servicio_nombre: servicio.nombre,
+          empresa,
+          tipo_monto: tipoMonto,
+          monto: montoNum,
+          fecha: fechaActual
+        });
+
+        if (resultado.exito) {
+          await cargarPresupuestos();
+          crearNotificacionGasto(servicio.nombre, montoNum);
+          Alert.alert("Éxito", resultado.mensaje);
+        } else {
+          Alert.alert("Error", resultado.mensaje);
+        }
+      }
+
+      limpiar();
+      if (onGastoAgregado) onGastoAgregado();
+    } catch (error) {
+      Alert.alert("Error", "Error al guardar el presupuesto");
+    }
   };
 
   const limpiar = () => {
@@ -96,33 +177,39 @@ export default function DetallePresupuesto({ route }) {
 
   const editar = (item) => {
     setEmpresa(item.empresa);
-    setTipoMonto(item.tipoMonto);
+    setTipoMonto(item.tipo_monto);
     setMonto(item.monto.toString());
     setEditarId(item.id);
   };
 
-  const eliminarPresupuesto = (id) => {
+  const eliminarPresupuesto = async (id) => {
     Alert.alert("Confirmación", "¿Eliminar este registro?", [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Eliminar",
         style: "destructive",
-        onPress: () =>
-          setPresupuestos((prev) => prev.filter((p) => p.id !== id)),
+        onPress: async () => {
+          const resultado = await ControladorPresupuestos.eliminarPresupuesto(id);
+          
+          if (resultado.exito) {
+            await cargarPresupuestos();
+            if (onGastoAgregado) onGastoAgregado();
+          } else {
+            Alert.alert("Error", resultado.mensaje);
+          }
+        },
       },
     ]);
   };
 
   const listaFiltrada = useMemo(() => {
     return presupuestos.filter((item) => {
-      const [dia, mes] = item.fecha.split("/");
-
-      const mesNumero = mes.padStart(2, "0");
+      const [año, mes] = item.fecha.split('-');
 
       if (filtroEmpresa !== "todas" && item.empresa !== filtroEmpresa)
         return false;
 
-      if (filtroMes !== "todas" && filtroMes !== mesNumero) return false;
+      if (filtroMes !== "todas" && filtroMes !== mes) return false;
 
       return true;
     });
@@ -146,6 +233,7 @@ export default function DetallePresupuesto({ route }) {
                 <Picker.Item label="Selecciona una empresa" value="" />
                 <Picker.Item label="Empresa A" value="A" />
                 <Picker.Item label="Empresa B" value="B" />
+                <Picker.Item label="Empresa C" value="C" />
               </Picker>
             </View>
 
@@ -198,7 +286,7 @@ export default function DetallePresupuesto({ route }) {
           <View style={styles.card}>
             <View>
               <Text style={styles.cardEmpresa}>Empresa {item.empresa}</Text>
-              <Text style={styles.cardDesc}>{item.tipoMonto}</Text>
+              <Text style={styles.cardDesc}>{item.tipo_monto}</Text>
               <Text style={styles.cardMonto}>${item.monto}</Text>
               <Text style={styles.cardFecha}>{item.fecha}</Text>
             </View>
@@ -232,7 +320,7 @@ export default function DetallePresupuesto({ route }) {
 
             <Text style={styles.label}>Empresa</Text>
             <View style={styles.modalChips}>
-              {["todas", "A", "B"].map((e) => (
+              {["todas", "A", "B", "C"].map((e) => (
                 <TouchableOpacity
                   key={e}
                   onPress={() => setFiltroEmpresa(e)}
@@ -282,15 +370,11 @@ export default function DetallePresupuesto({ route }) {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-
   titulo: { fontSize: 20, fontWeight: "700" },
   subtitulo: { color: "#555", marginBottom: 15 },
-
   label: { marginTop: 10, fontWeight: "700" },
-
   pickerContainer: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -298,7 +382,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 10,
   },
-
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -307,7 +390,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 10,
   },
-
   botonPrincipal: {
     backgroundColor: "#1F64BF",
     padding: 12,
@@ -315,16 +397,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
-
   botonTexto: { color: "#fff", fontWeight: "700" },
-
   filtrosRow: {
     flexDirection: "row",
     gap: 10,
     marginTop: 20,
     marginBottom: 10,
   },
-
   chip: {
     borderWidth: 1,
     borderColor: "#bbb",
@@ -337,14 +416,12 @@ const styles = StyleSheet.create({
     borderColor: "#1F64BF",
   },
   textoChipActivo: { color: "#fff" },
-
   chipFiltros: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
     backgroundColor: "#e8f0ff",
   },
-
   card: {
     backgroundColor: "#f3f3f3",
     padding: 15,
@@ -353,49 +430,40 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-
   cardEmpresa: { fontSize: 16, fontWeight: "700" },
   cardDesc: { color: "#555" },
   cardMonto: { fontWeight: "bold", marginTop: 5 },
   cardFecha: { fontSize: 12, color: "#777", marginTop: 3 },
-
   btnEditar: {
     backgroundColor: "#2196F3",
     padding: 7,
     borderRadius: 10,
     marginBottom: 5,
   },
-
   btnEliminar: {
     backgroundColor: "#E53935",
     padding: 7,
     borderRadius: 10,
   },
-
   btnTexto: { color: "#fff", fontWeight: "600" },
-
   listaVacia: {
     textAlign: "center",
     marginTop: 50,
     color: "#777",
   },
-
   modalFondo: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
-
   modalContainer: {
     width: "90%",
     backgroundColor: "#fff",
     borderRadius: 18,
     padding: 20,
   },
-
   modalTitulo: { fontSize: 18, fontWeight: "700", marginBottom: 10 },
-
   modalChips: {
     flexDirection: "row",
     flexWrap: "wrap",

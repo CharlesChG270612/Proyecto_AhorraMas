@@ -71,6 +71,70 @@ class Transaccion {
     }
   }
 
+  async obtenerPorId(id) {
+    try {
+      const transaccion = await BaseDeDatos.obtenerUno(
+        'SELECT * FROM transacciones WHERE id = ?',
+        [id]
+      );
+      return transaccion;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async obtenerCategoriasUnicas(usuarioId) {
+    try {
+      const categorias = await BaseDeDatos.obtenerMultiples(
+        'SELECT DISTINCT categoria FROM transacciones WHERE usuario_id = ? ORDER BY categoria',
+        [usuarioId]
+      );
+      return categorias.map(cat => cat.categoria);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async obtenerFechasUnicas(usuarioId) {
+    try {
+      const fechas = await BaseDeDatos.obtenerMultiples(
+        'SELECT DISTINCT fecha FROM transacciones WHERE usuario_id = ? ORDER BY fecha DESC',
+        [usuarioId]
+      );
+      return fechas.map(f => f.fecha);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async obtenerResumenMensual(usuarioId, mes, año) {
+    try {
+      const ingresos = await BaseDeDatos.obtenerUno(
+        `SELECT COALESCE(SUM(monto), 0) as total 
+         FROM transacciones 
+         WHERE usuario_id = ? AND tipo = 'ingreso' 
+         AND strftime('%Y-%m', fecha) = ?`,
+        [usuarioId, `${año}-${mes.toString().padStart(2, '0')}`]
+      );
+
+      const gastos = await BaseDeDatos.obtenerUno(
+        `SELECT COALESCE(SUM(monto), 0) as total 
+         FROM transacciones 
+         WHERE usuario_id = ? AND tipo = 'gasto' 
+         AND strftime('%Y-%m', fecha) = ?`,
+        [usuarioId, `${año}-${mes.toString().padStart(2, '0')}`]
+      );
+
+      return {
+        totalIngresos: ingresos?.total || 0,
+        totalGastos: gastos?.total || 0,
+        balance: (ingresos?.total || 0) - (gastos?.total || 0)
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async obtenerEstadisticasPorPeriodo(usuarioId, periodo) {
     try {
       let filtroFecha = '';

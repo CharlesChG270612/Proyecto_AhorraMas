@@ -1,4 +1,5 @@
 import Usuario from '../models/Usuario';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class ControladorAutenticacion {
   async registrar(datosUsuario) {
@@ -35,10 +36,17 @@ class ControladorAutenticacion {
       const resultado = await Usuario.crear(usuario, correo, contraseña);
       
       if (resultado.exito) {
+        const usuarioCreado = await Usuario.buscarPorId(resultado.idInsertado);
+        await this.guardarSesion(usuarioCreado);
+        
         return { 
           exito: true, 
           mensaje: 'Usuario registrado exitosamente',
-          usuarioId: resultado.idInsertado 
+          usuario: {
+            id: usuarioCreado.id,
+            usuario: usuarioCreado.usuario,
+            correo: usuarioCreado.correo
+          }
         };
       } else {
         if (resultado.error && resultado.error.includes('UNIQUE')) {
@@ -64,8 +72,12 @@ class ControladorAutenticacion {
     }
 
     try {
-      const usuarioEncontrado = await Usuario.buscarPorUsuario(usuario);
+      let usuarioEncontrado = await Usuario.buscarPorUsuario(usuario);
       
+      if (!usuarioEncontrado) {
+        usuarioEncontrado = await Usuario.buscarPorCorreo(usuario);
+      }
+
       if (!usuarioEncontrado) {
         return { exito: false, mensaje: 'Usuario no encontrado' };
       }
@@ -75,6 +87,8 @@ class ControladorAutenticacion {
       if (!contraseñaValida) {
         return { exito: false, mensaje: 'Contraseña incorrecta' };
       }
+
+      await this.guardarSesion(usuarioEncontrado);
 
       return { 
         exito: true, 
@@ -88,6 +102,55 @@ class ControladorAutenticacion {
     } catch (error) {
       console.error('Error en inicio de sesión:', error);
       return { exito: false, mensaje: 'Error del servidor: ' + error.message };
+    }
+  }
+
+  async guardarSesion(usuario) {
+    try {
+      const usuarioData = {
+        id: usuario.id,
+        usuario: usuario.usuario,
+        correo: usuario.correo,
+        loggedIn: true
+      };
+      
+      await AsyncStorage.setItem('usuario_actual', JSON.stringify(usuarioData));
+      return true;
+    } catch (error) {
+      console.error('Error guardando sesión:', error);
+      return false;
+    }
+  }
+
+  async obtenerUsuarioActual() {
+    try {
+      const usuarioData = await AsyncStorage.getItem('usuario_actual');
+      if (usuarioData) {
+        return JSON.parse(usuarioData);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error obteniendo usuario actual:', error);
+      return null;
+    }
+  }
+
+  async cerrarSesion() {
+    try {
+      await AsyncStorage.removeItem('usuario_actual');
+      return { exito: true, mensaje: 'Sesión cerrada exitosamente' };
+    } catch (error) {
+      console.error('Error cerrando sesión:', error);
+      return { exito: false, mensaje: 'Error al cerrar sesión' };
+    }
+  }
+
+  async verificarAutenticacion() {
+    try {
+      const usuario = await this.obtenerUsuarioActual();
+      return usuario !== null && usuario.loggedIn === true;
+    } catch (error) {
+      return false;
     }
   }
 
@@ -119,135 +182,6 @@ class ControladorAutenticacion {
     } catch (error) {
       console.error('Error en recuperación de contraseña:', error);
       return { exito: false, mensaje: 'Error del servidor: ' + error.message };
-    }
-  }
-
-  async restablecerContraseña(datos) {
-    const { usuarioOCorreo, nuevaContraseña, token } = datos;
-
-    if (!usuarioOCorreo || !nuevaContraseña) {
-      return { exito: false, mensaje: 'Todos los campos son requeridos' };
-    }
-
-    if (nuevaContraseña.length < 6) {
-      return { exito: false, mensaje: 'La contraseña debe tener al menos 6 caracteres' };
-    }
-
-    try {
-      let usuarioEncontrado = await Usuario.buscarPorUsuario(usuarioOCorreo);
-      
-      if (!usuarioEncontrado) {
-        usuarioEncontrado = await Usuario.buscarPorCorreo(usuarioOCorreo);
-      }
-
-      if (!usuarioEncontrado) {
-        return { exito: false, mensaje: 'Usuario o correo electrónico no encontrado' };
-      }
-
-      if (token) {
-        const usuarioPorToken = await Usuario.buscarPorToken(token);
-        if (!usuarioPorToken || usuarioPorToken.id !== usuarioEncontrado.id) {
-          return { exito: false, mensaje: 'Token de recuperación inválido o expirado' };
-        }
-        
-        await Usuario.eliminarToken(token);
-      }
-
-      const resultado = await Usuario.actualizarContraseña(usuarioEncontrado.id, nuevaContraseña);
-      
-      if (resultado.exito) {
-        return { 
-          exito: true, 
-          mensaje: 'Contraseña restablecida exitosamente'
-        };
-      } else {
-        return { exito: false, mensaje: resultado.error };
-      }
-      
-    } catch (error) {
-      console.error('Error al restablecer contraseña:', error);
-      return { exito: false, mensaje: 'Error del servidor: ' + error.message };
-    }
-  }
-
-  async validarTokenRecuperacion(token) {
-    if (!token) {
-      return { exito: false, mensaje: 'Token no proporcionado' };
-    }
-
-    try {
-      const usuarioEncontrado = await Usuario.buscarPorToken(token);
-      
-      if (!usuarioEncontrado) {
-        return { exito: false, mensaje: 'Token inválido o expirado' };
-      }
-
-      return { 
-        exito: true, 
-        mensaje: 'Token válido',
-        usuario: {
-          id: usuarioEncontrado.id,
-          usuario: usuarioEncontrado.usuario,
-          correo: usuarioEncontrado.correo
-        }
-      };
-    } catch (error) {
-      console.error('Error al validar token:', error);
-      return { exito: false, mensaje: 'Error del servidor: ' + error.message };
-    }
-  }
-
-  async cambiarContraseña(datos) {
-    const { usuarioId, contraseñaActual, nuevaContraseña } = datos;
-
-    if (!usuarioId || !contraseñaActual || !nuevaContraseña) {
-      return { exito: false, mensaje: 'Todos los campos son requeridos' };
-    }
-
-    if (nuevaContraseña.length < 6) {
-      return { exito: false, mensaje: 'La nueva contraseña debe tener al menos 6 caracteres' };
-    }
-
-    try {
-      const usuarioEncontrado = await Usuario.buscarPorId(usuarioId);
-      
-      if (!usuarioEncontrado) {
-        return { exito: false, mensaje: 'Usuario no encontrado' };
-      }
-
-      const contraseñaValida = contraseñaActual === usuarioEncontrado.contraseña;
-      
-      if (!contraseñaValida) {
-        return { exito: false, mensaje: 'Contraseña actual incorrecta' };
-      }
-
-      const resultado = await Usuario.actualizarContraseña(usuarioId, nuevaContraseña);
-      
-      if (resultado.exito) {
-        return { 
-          exito: true, 
-          mensaje: 'Contraseña cambiada exitosamente'
-        };
-      } else {
-        return { exito: false, mensaje: resultado.error };
-      }
-      
-    } catch (error) {
-      console.error('Error al cambiar contraseña:', error);
-      return { exito: false, mensaje: 'Error del servidor: ' + error.message };
-    }
-  }
-
-  async limpiarTokensExpirados() {
-    try {
-      const resultado = await Usuario.eliminarTokensExpirados();
-      return { 
-        exito: true, 
-        mensaje: `Tokens expirados eliminados: ${resultado.tokensEliminados || 0}`
-      };
-    } catch (error) {
-      console.error('Error al limpiar tokens expirados:', error);
-      return { exito: false, mensaje: 'Error al limpiar tokens expirados' };
     }
   }
 }

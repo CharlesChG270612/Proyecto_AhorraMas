@@ -2,7 +2,6 @@ import React from "react";
 import {View,Text,StyleSheet,Image,ScrollView,TouchableOpacity,
 } from "react-native";
 
-import BarraProgreso from "./components/BarraProgreso";
 
 export default function Interfaz_Inicio({ navigation }) {
   const opciones = [
@@ -87,7 +86,6 @@ export default function Interfaz_Inicio({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
-      <BarraProgreso gasto={0} presupuesto={5000} />
       
     </ScrollView>
   );
