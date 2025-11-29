@@ -1,41 +1,49 @@
-import React, { useState, useEffect } from "react"; // ✅ useEffect agregado
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  Alert,
-  Image,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import {View,Text,StyleSheet,TextInput,Pressable,Alert,Image,SafeAreaView,KeyboardAvoidingView,Platform,ActivityIndicator,} from "react-native";
+import ControladorAutenticacion from "../controllers/ControladorAutenticacion";
 
-export default function LoginScreen({ navigation, route }) { // ✅ route agregado
+export default function LoginScreen({ navigation, route }) {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
+  const [cargando, setCargando] = useState(false);
 
-  // ✅ useEffect para manejar errores que vengan de ValidandoCredencialesScreen
   useEffect(() => {
     if (route.params?.error) {
       Alert.alert("Error de Autenticación", route.params.error);
-      // Limpiar el parámetro de error después de mostrarlo
       navigation.setParams({ error: undefined });
     }
   }, [route.params, navigation]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!usuario.trim() || !password.trim()) {
       Alert.alert("Error", "Completa Usuario y Contraseña.");
       return;
     }
 
-    // Navega a la pantalla de validación
-    navigation.navigate("ValidandoCredenciales", {
-      usuario: usuario,
-      password: password
-    });
+    setCargando(true);
+
+    try {
+      const resultado = await ControladorAutenticacion.iniciarSesion({
+        usuario: usuario.trim(),
+        contraseña: password.trim()
+      });
+
+      setCargando(false);
+
+      if (resultado.exito) {
+        Alert.alert("Éxito", resultado.mensaje);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Tabs" }],
+        });
+      } else {
+        Alert.alert("Error", resultado.mensaje);
+      }
+    } catch (error) {
+      setCargando(false);
+      console.error('Error en login:', error);
+      Alert.alert("Error", "Problema de conexión con la base de datos. Reinstala la app.");
+    }
   };
 
   return (
@@ -57,7 +65,7 @@ export default function LoginScreen({ navigation, route }) { // ✅ route agrega
           <Image
             source={require("../assets/iconos/entrar.png")}
             style={styles.headerImage}
-            resizeMode="contain" // ✅ Usar prop resizeMode en lugar de style
+            resizeMode="contain"
           />
 
           <Text style={styles.label}>Usuario:</Text>
@@ -68,6 +76,7 @@ export default function LoginScreen({ navigation, route }) { // ✅ route agrega
             value={usuario}
             onChangeText={setUsuario}
             autoCapitalize="none"
+            editable={!cargando}
           />
 
           <Text style={styles.label}>Contraseña:</Text>
@@ -78,19 +87,37 @@ export default function LoginScreen({ navigation, route }) { // ✅ route agrega
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            editable={!cargando}
           />
           
           <View style={styles.linkContainer}>
-            <Pressable onPress={() => navigation.navigate("Recuperacion")}>
+            <Pressable 
+              onPress={() => navigation.navigate("Recuperacion")}
+              disabled={cargando}
+            >
               <Text style={styles.contraseñaLinkText}>Olvidaste tu contraseña</Text>
             </Pressable>
           </View>
 
-          <Pressable style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Iniciar Sesión</Text>
-          </Pressable>
+          {cargando ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#03A9F4" />
+              <Text style={styles.loadingText}>Verificando credenciales...</Text>
+            </View>
+          ) : (
+            <Pressable 
+              style={styles.button} 
+              onPress={handleLogin}
+              disabled={cargando}
+            >
+              <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            </Pressable>
+          )}
           
-          <Pressable onPress={() => navigation.navigate("Registro")}>
+          <Pressable 
+            onPress={() => navigation.navigate("Registro")}
+            disabled={cargando}
+          >
             <Text style={styles.loginLinkText}>
               ¿No tienes cuenta? Regístrate aquí
             </Text>
@@ -127,7 +154,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     width: "90%",
     alignItems: "center",
-    // ✅ Solución para el warning de shadow*
     ...Platform.select({
       web: {
         boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
@@ -193,6 +219,15 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     marginBottom: 20,
-    // ✅ resizeMode se usa como prop, no en styles
+  },
+  loadingContainer: {
+    alignItems: "center",
+    marginVertical: 15,
+    width: "100%",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#666",
   },
 });

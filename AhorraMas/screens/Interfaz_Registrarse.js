@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {View,Text,StyleSheet,TextInput,Pressable,Alert,Image,SafeAreaView,KeyboardAvoidingView,Platform,ActivityIndicator,} from "react-native";
+import ControladorAutenticacion from "../controllers/ControladorAutenticacion";
 
 export default function Interfaz_Registrarse({ navigation }) {
   const [usuario, setUsuario] = useState("");
@@ -7,47 +8,69 @@ export default function Interfaz_Registrarse({ navigation }) {
   const [password, setPassword] = useState("");
   const [cargando, setCargando] = useState(false);
 
- const handleRegistro = () => {
-  if (!usuario.trim()) {
-    Alert.alert("Falta información", "Ingresa un nombre de usuario.");
-    return;
-  }
+  const handleRegistro = async () => {
+    if (!usuario.trim()) {
+      Alert.alert("Falta información", "Ingresa un nombre de usuario.");
+      return;
+    }
 
-  if (!email.trim()) {
-    Alert.alert("Falta información", "Ingresa un correo electrónico.");
-    return;
-  }
+    if (usuario.length < 3) {
+      Alert.alert("Usuario inválido", "El usuario debe tener al menos 3 caracteres.");
+      return;
+    }
 
-  const regexEmail =
-    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email.trim()) {
+      Alert.alert("Falta información", "Ingresa un correo electrónico.");
+      return;
+    }
 
-  if (!regexEmail.test(email)) {
-    Alert.alert("Correo inválido", "Ingresa un correo electrónico válido.");
-    return;
-  }
+    const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!regexEmail.test(email)) {
+      Alert.alert("Correo inválido", "Ingresa un correo electrónico válido.");
+      return;
+    }
 
-  if (!password.trim()) {
-    Alert.alert("Falta información", "Ingresa una contraseña.");
-    return;
-  }
+    if (!password.trim()) {
+      Alert.alert("Falta información", "Ingresa una contraseña.");
+      return;
+    }
 
-  if (password.length < 6) {
-    Alert.alert(
-      "Contraseña débil",
-      "La contraseña debe tener al menos 6 caracteres."
-    );
-    return;
-  }
+    if (password.length < 6) {
+      Alert.alert("Contraseña débil", "La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
 
-  setCargando(true);
+    setCargando(true);
 
-    setTimeout(() => {
+    try {
+      const resultado = await ControladorAutenticacion.registrar({
+        usuario: usuario.trim(),
+        correo: email.trim(),
+        contraseña: password.trim()
+      });
+
       setCargando(false);
-      Alert.alert("Registrado", "Tu cuenta ha sido creada exitosamente.");
-      navigation.replace("Login");
-    }, 3000);
-};
 
+      if (resultado.exito) {
+        Alert.alert(
+          "Registro Exitoso", 
+          resultado.mensaje,
+          [
+            {
+              text: "OK",
+              onPress: () => navigation.replace("Login")
+            }
+          ]
+        );
+      } else {
+        Alert.alert("Error en el registro", resultado.mensaje);
+      }
+    } catch (error) {
+      setCargando(false);
+      console.error('Error en registro:', error);
+      Alert.alert("Error", "Ocurrió un error inesperado. Intenta nuevamente.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -71,47 +94,57 @@ export default function Interfaz_Registrarse({ navigation }) {
           <Text style={styles.label}>Usuario:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Usuario"
+            placeholder="Usuario (mín. 3 caracteres)"
             placeholderTextColor="#999"
             value={usuario}
             onChangeText={setUsuario}
             autoCapitalize="none"
+            editable={!cargando}
           />
 
           <Text style={styles.label}>Correo electrónico:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Correo"
+            placeholder="Correo electrónico"
             placeholderTextColor="#999"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
+            editable={!cargando}
+            keyboardType="email-address"
+            autoComplete="email"
           />
 
           <Text style={styles.label}>Contraseña:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Contraseña"
+            placeholder="Contraseña (mín. 6 caracteres)"
             placeholderTextColor="#999"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            editable={!cargando}
           />
 
           {cargando ? (
-            <View style={{ alignItems: "center", marginTop: 10 }}>
+            <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#03A9F4" />
-              <Text style={{ marginTop: 10, fontSize: 16 }}>
-                Validando credenciales...
-              </Text>
+              <Text style={styles.loadingText}>Creando cuenta...</Text>
             </View>
           ) : (
-            <Pressable style={styles.button} onPress={handleRegistro}>
-              <Text style={styles.buttonText}>Guardar</Text>
+            <Pressable 
+              style={styles.button} 
+              onPress={handleRegistro}
+              disabled={cargando}
+            >
+              <Text style={styles.buttonText}>Registrarse</Text>
             </Pressable>
           )}
 
-          <Pressable onPress={() => navigation.replace("Login")}>
+          <Pressable 
+            onPress={() => navigation.replace("Login")}
+            disabled={cargando}
+          >
             <Text style={styles.loginLinkText}>
               ¿Ya tienes cuenta? Inicia sesión
             </Text>
@@ -123,8 +156,13 @@ export default function Interfaz_Registrarse({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#2778BF" },
-  header: { padding: 50 },
+  safeArea: { 
+    flex: 1, 
+    backgroundColor: "#2778BF" 
+  },
+  header: { 
+    padding: 50 
+  },
   headerText: {
     color: "#fff",
     fontSize: 20,
@@ -188,5 +226,15 @@ const styles = StyleSheet.create({
     height: 90,
     marginBottom: 20,
     resizeMode: "contain",
+  },
+  loadingContainer: {
+    alignItems: "center",
+    marginVertical: 15,
+    width: "100%",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#666",
   },
 });

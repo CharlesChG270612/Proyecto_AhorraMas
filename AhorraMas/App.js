@@ -20,11 +20,12 @@ export default function App() {
 
           <Stack.Screen name="Splash" component={SplashScreen} />
 
+          <Stack.Screen name="Registro" component={Interfaz_Registrarse} />
+
           <Stack.Screen name="Login" component={LoginScreen} />
 
           <Stack.Screen name="Recuperacion" component={Interfaz_RecuperacionContraseña} />
 
-          <Stack.Screen name="Registro" component={Interfaz_Registrarse} />
           <Stack.Screen name="ValidandoCredenciales" component={ValidandoCredencialesScreen} options={{ headerShown: false }}/>
 
           <Stack.Screen name="Tabs" component={TabsNavegacion} />
