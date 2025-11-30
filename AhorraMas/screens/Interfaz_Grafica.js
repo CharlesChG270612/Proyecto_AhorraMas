@@ -8,14 +8,26 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  ActivityIndicator
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import { Svg, Circle, Path, G } from 'react-native-svg';
+import ControladorTransacciones from '../controllers/ControladorTransacciones';
+import ControladorAutenticacion from '../controllers/ControladorAutenticacion';
 
 const screenWidth = Dimensions.get("window").width;
 
 // Componente de gráfica de barras personalizado MEJORADO
 const GraficaBarras = ({ datos, altura = 200, colores = [] }) => {
+  // Si no hay datos válidos, mostrar mensaje
+  if (!datos || !datos.datasets || !datos.datasets[0] || datos.datasets[0].data.length === 0) {
+    return (
+      <View style={[styles.graficaContainer, { height: altura, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={styles.textoSinDatos}>No hay datos disponibles</Text>
+      </View>
+    );
+  }
+
   const maxValor = Math.max(...datos.datasets[0].data);
   
   return (
@@ -34,7 +46,7 @@ const GraficaBarras = ({ datos, altura = 200, colores = [] }) => {
       <View style={styles.barrasContainer}>
         {datos.datasets[0].data.map((valor, index) => {
           const alturaBarra = (valor / maxValor) * (altura - 60);
-          const colorBarra = colores[index] || '#4A90E2'; // Color por categoría
+          const colorBarra = colores[index] || '#4A90E2';
           
           return (
             <View key={index} style={styles.columnaBarra}>
@@ -59,6 +71,15 @@ const GraficaBarras = ({ datos, altura = 200, colores = [] }) => {
 
 // Componente de gráfica circular personalizado
 const GraficaCircular = ({ datos }) => {
+  // Si no hay datos válidos, mostrar mensaje
+  if (!datos || datos.length === 0 || (datos.length === 1 && datos[0].name === 'Sin datos')) {
+    return (
+      <View style={[styles.graficaCircularContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={styles.textoSinDatos}>No hay datos disponibles</Text>
+      </View>
+    );
+  }
+
   const total = datos.reduce((sum, item) => sum + item.population, 0);
   
   return (
@@ -87,6 +108,16 @@ const GraficaCircular = ({ datos }) => {
 
 // NUEVO COMPONENTE GRAFICA PASTEL CON SVG
 const GraficaPastel = ({ datos, titulo }) => {
+  // Si no hay datos válidos, mostrar mensaje
+  if (!datos || datos.length === 0 || (datos.length === 1 && datos[0].name === 'Sin datos')) {
+    return (
+      <View style={[styles.graficaPastelContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={styles.tituloGrafica}>{titulo}</Text>
+        <Text style={styles.textoSinDatos}>No hay datos disponibles</Text>
+      </View>
+    );
+  }
+
   const total = datos.reduce((sum, item) => sum + item.population, 0);
   const size = 200;
   const radius = 80;
@@ -290,73 +321,122 @@ const MenuTipoGrafica = ({ tipoSeleccionado, onSeleccionar }) => {
 };
 
 export default function Interfaz_Grafica({ navigation }) {
-
-  useEffect(() => {
-    const parent = navigation.getParent();
-    if (!parent) return;
-    parent.setOptions({ tabBarStyle: { display: "none" } });
-    return () =>
-      parent.setOptions({
-        tabBarStyle: {
-          height: 90,
-          paddingBottom: 50,
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-        },
-      });
-  }, []);
-  
   const [tipo, setTipo] = useState('ingresos');
   const [periodo, setPeriodo] = useState('mes');
   const [tipoGrafica, setTipoGrafica] = useState('barras');
   const [cargando, setCargando] = useState(true);
+  const [refrescando, setRefrescando] = useState(false);
   const [datosMovimientos, setDatosMovimientos] = useState([]);
   const [estadisticas, setEstadisticas] = useState({
     totalIngresos: 0,
     totalGastos: 0,
     balance: 0
   });
+  const [usuario, setUsuario] = useState(null);
 
-  // Datos de ejemplo para ingresos y egresos
-  const datosEjemplo = [
-    { id: '1', tipo: 'gasto', monto: 450, categoria: 'comida', fecha: '2024-01-05' },
-    { id: '2', tipo: 'gasto', monto: 380, categoria: 'transporte', fecha: '2024-01-12' },
-    { id: '3', tipo: 'ingreso', monto: 1200, categoria: 'nomina', fecha: '2024-01-15' },
-    { id: '4', tipo: 'gasto', monto: 520, categoria: 'servicios', fecha: '2024-01-20' },
-    { id: '5', tipo: 'gasto', monto: 300, categoria: 'entretenimiento', fecha: '2024-01-25' },
-    { id: '6', tipo: 'ingreso', monto: 800, categoria: 'freelance', fecha: '2024-01-28' },
-    { id: '7', tipo: 'gasto', monto: 420, categoria: 'transporte', fecha: '2024-02-10' },
-    { id: '8', tipo: 'ingreso', monto: 1200, categoria: 'nomina', fecha: '2024-02-15' },
-    { id: '9', tipo: 'gasto', monto: 350, categoria: 'servicios', fecha: '2024-02-18' },
-  ];
-
+  // Obtener el usuario logueado usando el mismo método que el historial
   useEffect(() => {
-    cargarDatos();
+    verificarYcargarUsuario();
   }, []);
 
+  const verificarYcargarUsuario = async () => {
+    try {
+      console.log('DEBUG: Obteniendo usuario actual...');
+      const usuarioActual = await ControladorAutenticacion.obtenerUsuarioActual();
+      
+      console.log('DEBUG: Usuario obtenido:', usuarioActual);
+      
+      if (!usuarioActual) {
+        console.log('DEBUG: No hay usuario logueado');
+        setCargando(false);
+        return;
+      }
+      
+      setUsuario(usuarioActual);
+      // Cargar datos inmediatamente después de obtener el usuario
+      cargarDatos(usuarioActual.id);
+    } catch (error) {
+      console.error('Error obteniendo usuario:', error);
+      setCargando(false);
+    }
+  };
+
+  // Configurar listener para cuando se agreguen nuevas transacciones
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('DEBUG: Pantalla enfocada, recargando datos...');
+      if (usuario) {
+        cargarDatos(usuario.id);
+      } else {
+        verificarYcargarUsuario();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, usuario]);
+
+  // Cargar datos cuando cambie el periodo o tipo
   useEffect(() => {
     if (datosMovimientos.length > 0) {
       calcularEstadisticas();
     }
-  }, [datosMovimientos, periodo]);
+  }, [datosMovimientos, periodo, tipo]);
 
-  const cargarDatos = () => {
-    setCargando(true);
-    setTimeout(() => {
-      setDatosMovimientos(datosEjemplo);
+  const cargarDatos = async (usuarioId = usuario?.id) => {
+    console.log('DEBUG: Cargando datos para usuario:', usuarioId);
+    
+    if (!usuarioId) {
+      console.log('DEBUG: No hay usuario ID, no se pueden cargar datos');
       setCargando(false);
-    }, 1000);
+      return;
+    }
+    
+    setCargando(true);
+    try {
+      console.log('DEBUG: Llamando a ControladorTransacciones.obtenerTransaccionesUsuario');
+      const resultado = await ControladorTransacciones.obtenerTransaccionesUsuario(usuarioId);
+      
+      console.log('DEBUG: Resultado del controlador:', resultado);
+      console.log('DEBUG: Transacciones obtenidas:', resultado.datos?.length || 0);
+      
+      if (resultado.exito) {
+        setDatosMovimientos(resultado.datos || []);
+      } else {
+        console.error('Error cargando transacciones:', resultado.mensaje);
+        setDatosMovimientos([]);
+      }
+    } catch (error) {
+      console.error('Error en cargarDatos:', error);
+      setDatosMovimientos([]);
+    } finally {
+      setCargando(false);
+      setRefrescando(false);
+    }
+  };
+
+  const onRefresh = () => {
+    console.log('DEBUG: Actualizando datos manualmente...');
+    setRefrescando(true);
+    if (usuario) {
+      cargarDatos(usuario.id);
+    } else {
+      verificarYcargarUsuario();
+    }
   };
 
   const calcularEstadisticas = () => {
-    const gastos = datosMovimientos.filter(m => m.tipo === 'gasto');
-    const ingresos = datosMovimientos.filter(m => m.tipo === 'ingreso');
+    console.log('DEBUG: Calculando estadísticas...');
+    const transaccionesFiltradas = filtrarTransaccionesPorPeriodo(datosMovimientos, periodo);
+    console.log('DEBUG: Transacciones filtradas:', transaccionesFiltradas.length);
+    
+    const gastos = transaccionesFiltradas.filter(m => m.tipo === 'gasto');
+    const ingresos = transaccionesFiltradas.filter(m => m.tipo === 'ingreso');
     
     const totalGastos = gastos.reduce((sum, m) => sum + m.monto, 0);
     const totalIngresos = ingresos.reduce((sum, m) => sum + m.monto, 0);
     const balance = totalIngresos - totalGastos;
+
+    console.log('DEBUG: Estadísticas calculadas - Ingresos:', totalIngresos, 'Gastos:', totalGastos, 'Balance:', balance);
 
     setEstadisticas({
       totalIngresos,
@@ -365,129 +445,100 @@ export default function Interfaz_Grafica({ navigation }) {
     });
   };
 
+  const filtrarTransaccionesPorPeriodo = (transacciones, periodoFiltro) => {
+    const ahora = new Date();
+    
+    return transacciones.filter(transaccion => {
+      if (!transaccion.fecha) return false;
+      
+      const fechaTransaccion = new Date(transaccion.fecha);
+      
+      switch (periodoFiltro) {
+        case 'dia':
+          return fechaTransaccion.toDateString() === ahora.toDateString();
+        case 'mes':
+          return fechaTransaccion.getMonth() === ahora.getMonth() && 
+                 fechaTransaccion.getFullYear() === ahora.getFullYear();
+        case 'año':
+          return fechaTransaccion.getFullYear() === ahora.getFullYear();
+        default:
+          return true;
+      }
+    });
+  };
+
   const obtenerDatosGrafica = () => {
-    if (tipo === 'ingresos') {
-      switch (periodo) {
-        case 'dia':
-          return {
-            labels: ['Nómina', 'Freelance', 'Inversiones', 'Bonos', 'Otros'],
-            datasets: [{ data: [850, 320, 180, 120, 80] }] // Porcentajes: 55%, 21%, 12%, 8%, 5%
-          };
-        case 'mes':
-          return {
-            labels: ['Nómina', 'Freelance', 'Inversiones', 'Bonos', 'Otros'],
-            datasets: [{ data: [2200, 950, 650, 350, 150] }] // Porcentajes: 52%, 22%, 15%, 8%, 4%
-          };
-        case 'año':
-          return {
-            labels: ['Nómina', 'Freelance', 'Inversiones', 'Bonos', 'Otros'],
-            datasets: [{ data: [14500, 7200, 3800, 2200, 800] }] // Porcentajes: 51%, 25%, 13%, 8%, 3%
-          };
-        default:
-          return {
-            labels: ['Nómina', 'Freelance', 'Inversiones', 'Bonos', 'Otros'],
-            datasets: [{ data: [2200, 950, 650, 350, 150] }]
-          };
+    const transaccionesFiltradas = filtrarTransaccionesPorPeriodo(datosMovimientos, periodo);
+    const transaccionesTipo = transaccionesFiltradas.filter(t => 
+      tipo === 'ingresos' ? t.tipo === 'ingreso' : t.tipo === 'gasto'
+    );
+
+    console.log('DEBUG: Transacciones para gráfica:', transaccionesTipo.length);
+
+    // Agrupar por categoría
+    const categoriasMap = {};
+    transaccionesTipo.forEach(transaccion => {
+      if (!transaccion.categoria) return;
+      
+      if (!categoriasMap[transaccion.categoria]) {
+        categoriasMap[transaccion.categoria] = 0;
       }
-    } else {
-      // Datos para egresos
-      switch (periodo) {
-        case 'dia':
-          return {
-            labels: ['Comida', 'Servicios', 'Transporte', 'Entretenimiento', 'Otros'],
-            datasets: [{ data: [180, 95, 75, 45, 25] }] // Porcentajes: 43%, 23%, 18%, 11%, 6%
-          };
-        case 'mes':
-          return {
-            labels: ['Comida', 'Servicios', 'Transporte', 'Entretenimiento', 'Otros'],
-            datasets: [{ data: [1050, 780, 620, 290, 210] }] // Porcentajes: 35%, 26%, 21%, 10%, 7%
-          };
-        case 'año':
-          return {
-            labels: ['Comida', 'Servicios', 'Transporte', 'Entretenimiento', 'Otros'],
-            datasets: [{ data: [5800, 4200, 3500, 1800, 1200] }] // Porcentajes: 35%, 25%, 21%, 11%, 7%
-          };
-        default:
-          return {
-            labels: ['Comida', 'Servicios', 'Transporte', 'Entretenimiento', 'Otros'],
-            datasets: [{ data: [1050, 780, 620, 290, 210] }]
-          };
-      }
+      categoriasMap[transaccion.categoria] += transaccion.monto;
+    });
+
+    const categorias = Object.keys(categoriasMap);
+    const montos = Object.values(categoriasMap);
+
+    console.log('DEBUG: Datos agrupados - Categorías:', categorias, 'Montos:', montos);
+
+    // Si no hay datos, usar valores por defecto
+    if (categorias.length === 0) {
+      return {
+        labels: ['Sin datos'],
+        datasets: [{ data: [1] }]
+      };
     }
+
+    return {
+      labels: categorias,
+      datasets: [{ data: montos }]
+    };
   };
 
   const obtenerDatosCategorias = () => {
-    if (tipo === 'ingresos') {
-      switch (periodo) {
-        case 'dia':
-          return [
-            { name: 'Nómina', population: 850, color: '#4CAF50' },      // 55%
-            { name: 'Freelance', population: 320, color: '#2196F3' },   // 21%
-            { name: 'Inversiones', population: 180, color: '#FF9800' }, // 12%
-            { name: 'Bonos', population: 120, color: '#9C27B0' },       // 8%
-            { name: 'Otros', population: 80, color: '#607D8B' }         // 5%
-          ];
-        case 'mes':
-          return [
-            { name: 'Nómina', population: 2200, color: '#4CAF50' },     // 52%
-            { name: 'Freelance', population: 950, color: '#2196F3' },   // 22%
-            { name: 'Inversiones', population: 650, color: '#FF9800' }, // 15%
-            { name: 'Bonos', population: 350, color: '#9C27B0' },       // 8%
-            { name: 'Otros', population: 150, color: '#607D8B' }        // 4%
-          ];
-        case 'año':
-          return [
-            { name: 'Nómina', population: 14500, color: '#4CAF50' },    // 51%
-            { name: 'Freelance', population: 7200, color: '#2196F3' },  // 25%
-            { name: 'Inversiones', population: 3800, color: '#FF9800' },// 13%
-            { name: 'Bonos', population: 2200, color: '#9C27B0' },      // 8%
-            { name: 'Otros', population: 800, color: '#607D8B' }        // 3%
-          ];
-        default:
-          return [
-            { name: 'Nómina', population: 2200, color: '#4CAF50' },
-            { name: 'Freelance', population: 950, color: '#2196F3' },
-            { name: 'Inversiones', population: 650, color: '#FF9800' },
-            { name: 'Bonos', population: 350, color: '#9C27B0' },
-            { name: 'Otros', population: 150, color: '#607D8B' }
-          ];
+    const transaccionesFiltradas = filtrarTransaccionesPorPeriodo(datosMovimientos, periodo);
+    const transaccionesTipo = transaccionesFiltradas.filter(t => 
+      tipo === 'ingresos' ? t.tipo === 'ingreso' : t.tipo === 'gasto'
+    );
+
+    // Agrupar por categoría
+    const categoriasMap = {};
+    transaccionesTipo.forEach(transaccion => {
+      if (!transaccion.categoria) return;
+      
+      if (!categoriasMap[transaccion.categoria]) {
+        categoriasMap[transaccion.categoria] = 0;
       }
-    } else {
-      switch (periodo) {
-        case 'dia':
-          return [
-            { name: 'Comida', population: 180, color: '#FF6B6B' },      // 43%
-            { name: 'Servicios', population: 95, color: '#4ECDC4' },    // 23%
-            { name: 'Transporte', population: 75, color: '#45B7D1' },   // 18%
-            { name: 'Entretenimiento', population: 45, color: '#96CEB4' }, // 11%
-            { name: 'Otros', population: 25, color: '#FFBE76' }         // 6%
-          ];
-        case 'mes':
-          return [
-            { name: 'Comida', population: 1050, color: '#FF6B6B' },     // 35%
-            { name: 'Servicios', population: 780, color: '#4ECDC4' },   // 26%
-            { name: 'Transporte', population: 620, color: '#45B7D1' },  // 21%
-            { name: 'Entretenimiento', population: 290, color: '#96CEB4' }, // 10%
-            { name: 'Otros', population: 210, color: '#FFBE76' }        // 7%
-          ];
-        case 'año':
-          return [
-            { name: 'Comida', population: 5800, color: '#FF6B6B' },     // 35%
-            { name: 'Servicios', population: 4200, color: '#4ECDC4' },  // 25%
-            { name: 'Transporte', population: 3500, color: '#45B7D1' }, // 21%
-            { name: 'Entretenimiento', population: 1800, color: '#96CEB4' }, // 11%
-            { name: 'Otros', population: 1200, color: '#FFBE76' }       // 7%
-          ];
-        default:
-          return [
-            { name: 'Comida', population: 1050, color: '#FF6B6B' },
-            { name: 'Servicios', population: 780, color: '#4ECDC4' },
-            { name: 'Transporte', population: 620, color: '#45B7D1' },
-            { name: 'Entretenimiento', population: 290, color: '#96CEB4' },
-            { name: 'Otros', population: 210, color: '#FFBE76' }
-          ];
-      }
+      categoriasMap[transaccion.categoria] += transaccion.monto;
+    });
+
+    const categorias = Object.keys(categoriasMap);
+    const colores = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#607D8B', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFBE76'];
+
+    console.log('DEBUG: Datos para gráfica circular:', categorias);
+
+    // Si no hay datos, usar valores por defecto
+    if (categorias.length === 0) {
+      return [
+        { name: 'Sin datos', population: 1, color: '#CCCCCC' }
+      ];
     }
+
+    return categorias.map((categoria, index) => ({
+      name: categoria.charAt(0).toUpperCase() + categoria.slice(1),
+      population: categoriasMap[categoria],
+      color: colores[index % colores.length]
+    }));
   };
 
   const obtenerColoresBarras = () => {
@@ -529,6 +580,19 @@ export default function Interfaz_Grafica({ navigation }) {
     }
   };
 
+  const obtenerTransaccionesCount = () => {
+    const transaccionesFiltradas = filtrarTransaccionesPorPeriodo(datosMovimientos, periodo);
+    return transaccionesFiltradas.filter(m => m.tipo === (tipo === 'ingresos' ? 'ingreso' : 'gasto')).length;
+  };
+
+  const obtenerCategoriaPrincipal = () => {
+    const datosCategorias = obtenerDatosCategorias();
+    if (datosCategorias.length === 0 || datosCategorias[0].name === 'Sin datos') {
+      return 'N/A';
+    }
+    return datosCategorias[0].name;
+  };
+
   if (cargando) {
     return (
       <SafeAreaView style={styles.container}>
@@ -542,6 +606,8 @@ export default function Interfaz_Grafica({ navigation }) {
 
   const titulo = obtenerTitulo();
   const total = obtenerTotal();
+
+  console.log('DEBUG: Renderizando interfaz con', datosMovimientos.length, 'transacciones');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -560,7 +626,18 @@ export default function Interfaz_Grafica({ navigation }) {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refrescando}
+            onRefresh={onRefresh}
+            colors={['#4A90E2']}
+            tintColor="#4A90E2"
+          />
+        }
+      >
         
         {/* Selector de Tipo (Ingresos/Egresos) */}
         <View style={styles.tipoContainer}>
@@ -665,30 +742,30 @@ export default function Interfaz_Grafica({ navigation }) {
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>{titulo} promedio por {periodo}:</Text>
             <Text style={styles.statValue}>
-              ${(total / (periodo === 'dia' ? 7 : periodo === 'mes' ? 6 : 5)).toFixed(2)}
+              ${(total / Math.max(obtenerTransaccionesCount(), 1)).toFixed(2)}
             </Text>
           </View>
           
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Total de transacciones de {titulo.toLowerCase()}:</Text>
             <Text style={styles.statValue}>
-              {datosMovimientos.filter(m => m.tipo === (tipo === 'ingresos' ? 'ingreso' : 'gasto')).length}
+              {obtenerTransaccionesCount()}
             </Text>
           </View>
           
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Categoría principal:</Text>
             <Text style={styles.statValue}>
-              {obtenerDatosCategorias().length > 0 ? obtenerDatosCategorias()[0].name : 'N/A'}
+              {obtenerCategoriaPrincipal()}
             </Text>
           </View>
 
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Porcentaje de {titulo.toLowerCase()}:</Text>
             <Text style={styles.statValue}>
-              {tipo === 'ingresos' 
-                ? `${((estadisticas.totalIngresos / (estadisticas.totalIngresos + estadisticas.totalGastos)) * 100).toFixed(1)}%`
-                : `${((estadisticas.totalGastos / (estadisticas.totalIngresos + estadisticas.totalGastos)) * 100).toFixed(1)}%`
+              {estadisticas.totalIngresos + estadisticas.totalGastos > 0 
+                ? `${((total / (estadisticas.totalIngresos + estadisticas.totalGastos)) * 100).toFixed(1)}%`
+                : '0%'
               }
             </Text>
           </View>
@@ -715,6 +792,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  textoSinDatos: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   header: {
     flexDirection: "row",
