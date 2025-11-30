@@ -1,13 +1,80 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, Pressable, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image, Pressable, Alert, ActivityIndicator } from "react-native";
+import ControladorAutenticacion from "../controllers/ControladorAutenticacion";
+import Usuario from "../models/Usuario";
 
 export default function Interfaz_Perfil({ navigation, route }) {
-  const {
-    nombre = "Usuario de ejemplo",
-    email = "correo@ejemplo.com",
-    telefono = "5512345678",
-    userId = "ID-0001",
-  } = route?.params || {};
+  const [usuarioData, setUsuarioData] = useState(null);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    cargarDatosUsuario();
+  }, []);
+
+  const cargarDatosUsuario = async () => {
+    try {
+      setCargando(true);
+      
+      // Obtener el usuario actual de AsyncStorage
+      const usuarioActual = await ControladorAutenticacion.obtenerUsuarioActual();
+      
+      if (usuarioActual && usuarioActual.id) {
+        // Buscar información completa del usuario en la base de datos
+        const usuarioCompleto = await Usuario.buscarPorId(usuarioActual.id);
+        
+        if (usuarioCompleto) {
+          setUsuarioData({
+            nombre: usuarioCompleto.usuario || "Usuario",
+            email: usuarioCompleto.correo || "No especificado",
+            userId: `ID-${usuarioCompleto.id.toString().padStart(4, '0')}`
+          });
+        } else {
+          // Si no encuentra en BD, usar datos de AsyncStorage
+          setUsuarioData({
+            nombre: usuarioActual.usuario || "Usuario",
+            email: usuarioActual.correo || "No especificado",
+            userId: `ID-${usuarioActual.id.toString().padStart(4, '0')}`
+          });
+        }
+      } else {
+        // Datos por defecto si no hay usuario logueado
+        setUsuarioData({
+          nombre: "Invitado",
+          email: "No has iniciado sesión",
+          userId: "ID-0000"
+        });
+      }
+    } catch (error) {
+      console.error('Error cargando datos del usuario:', error);
+      Alert.alert("Error", "No se pudieron cargar los datos del perfil");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // Función para obtener la inicial del nombre
+  const obtenerInicial = (nombre) => {
+    if (!nombre || nombre === "Invitado") return "?";
+    return nombre.charAt(0).toUpperCase();
+  };
+
+  // Función para generar color basado en el nombre (consistente)
+  const generarColor = (nombre) => {
+    if (!nombre) return "#03A9F4";
+    
+    const colores = [
+      "#03A9F4", "#4CAF50", "#FF9800", "#9C27B0", 
+      "#F44336", "#2196F3", "#009688", "#FF5722",
+      "#673AB7", "#3F51B5", "#00BCD4", "#FFC107"
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < nombre.length; i++) {
+      hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    return colores[Math.abs(hash) % colores.length];
+  };
 
   const eliminarCuenta = () => {
     Alert.alert(
@@ -18,43 +85,68 @@ export default function Interfaz_Perfil({ navigation, route }) {
         {
           text: "Sí, eliminar",
           style: "destructive",
-          onPress: () => {
-          
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Login" }],
-            });
+          onPress: async () => {
+            try {
+              const usuarioActual = await ControladorAutenticacion.obtenerUsuarioActual();
+              if (usuarioActual && usuarioActual.id) {
+                // Aquí podrías agregar la lógica para eliminar el usuario de la base de datos
+                // await Usuario.eliminarUsuario(usuarioActual.id);
+              }
+              
+              // Cerrar sesión y redirigir al login
+              await ControladorAutenticacion.cerrarSesion();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Login" }],
+              });
+            } catch (error) {
+              console.error('Error eliminando cuenta:', error);
+              Alert.alert("Error", "No se pudo eliminar la cuenta");
+            }
           },
         },
       ]
     );
   };
 
+  if (cargando) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.card}>
+          <ActivityIndicator size="large" color="#03A9F4" />
+          <Text style={styles.loadingText}>Cargando perfil...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Image
-          source={require("../assets/iconos/perfil.png")}
-          style={styles.avatar}
-        />
+        {/* Círculo con la inicial del usuario */}
+        <View style={[
+          styles.avatarCircle,
+          { backgroundColor: generarColor(usuarioData?.nombre) }
+        ]}>
+          <Text style={styles.avatarText}>
+            {obtenerInicial(usuarioData?.nombre)}
+          </Text>
+        </View>
 
-        <Text style={styles.name}>{nombre}</Text>
-        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.name}>{usuarioData?.nombre}</Text>
+        <Text style={styles.email}>{usuarioData?.email}</Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Datos de la cuenta</Text>
+          <Text style={styles.sectionTitle}>Información de la cuenta</Text>
 
-          <Text style={styles.itemLabel}>Nombre</Text>
-          <Text style={styles.itemValue}>{nombre}</Text>
+          <Text style={styles.itemLabel}>Nombre de usuario</Text>
+          <Text style={styles.itemValue}>{usuarioData?.nombre}</Text>
 
           <Text style={styles.itemLabel}>Correo electrónico</Text>
-          <Text style={styles.itemValue}>{email}</Text>
-
-          <Text style={styles.itemLabel}>Número telefónico</Text>
-          <Text style={styles.itemValue}>{telefono}</Text>
+          <Text style={styles.itemValue}>{usuarioData?.email}</Text>
 
           <Text style={styles.itemLabel}>ID de usuario</Text>
-          <Text style={styles.itemValue}>{userId}</Text>
+          <Text style={styles.itemValue}>{usuarioData?.userId}</Text>
         </View>
 
         <Pressable style={styles.deleteButton} onPress={eliminarCuenta}>
@@ -82,12 +174,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 4,
   },
-  avatar: {
+  // Nuevos estilos para el círculo del avatar
+  avatarCircle: {
     width: 90,
     height: 90,
     borderRadius: 45,
     marginBottom: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
+  avatarText: {
+    color: "#fff",
+    fontSize: 36,
+    fontWeight: "bold",
+  },
+  // Eliminar el estilo de avatar anterior
+  // avatar: {
+  //   width: 90,
+  //   height: 90,
+  //   borderRadius: 45,
+  //   marginBottom: 16,
+  // },
   name: {
     fontSize: 22,
     fontWeight: "bold",
@@ -126,5 +238,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#666",
   },
 });

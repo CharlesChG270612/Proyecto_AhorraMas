@@ -96,7 +96,7 @@ export default function TabsNavegacion({ route }) {
         options={{
           tabBarIcon: () => (
             <Image
-              source={require("../assets/iconos/perfil.png")}
+              source={require("../assets/iconos/usuario.png")}
               style={{ width: 28, height: 28 }}
             />
           ),
