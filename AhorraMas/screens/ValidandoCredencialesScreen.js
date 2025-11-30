@@ -1,13 +1,5 @@
 import React, { useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  SafeAreaView,
-  Modal,
-  Image,
-} from "react-native";
+import {View,Text,StyleSheet,ActivityIndicator,SafeAreaView,Modal,Image,Alert,} from "react-native";
 
 export default function ValidandoCredencialesScreen({ navigation, route }) {
   const { usuario, password } = route.params || {};
@@ -17,20 +9,32 @@ export default function ValidandoCredencialesScreen({ navigation, route }) {
       try {
         await new Promise(resolve => setTimeout(resolve, 2000));
         
+        if (!usuario || !password) {
+          navigation.replace("Login", { 
+            error: "Datos de usuario no recibidos correctamente." 
+          });
+          return;
+        }
+        
         const credencialesValidas = usuario && password && 
                                    usuario.length >= 3 && 
                                    password.length >= 3;
         
         if (credencialesValidas) {
-         navigation.replace("Tabs", {
-  nombre: usuario,
-  email: usuario + "@gmail.com",
-  telefono: "5512345678",
-  userId: "ID-" + Math.floor(Math.random() * 9999),
-           });
+          navigation.replace("Tabs", {
+            nombre: usuario,
+            email: usuario + "@gmail.com",
+            telefono: "5512345678",
+            userId: "ID-" + Math.floor(Math.random() * 9999),
+          });
+        } else {
+          navigation.replace("Login", { 
+            error: "Credenciales inválidas. Intenta nuevamente." 
+          });
         }
         
       } catch (error) {
+        console.error('Error en validación:', error);
         navigation.replace("Login", { 
           error: "Error de conexión. Intenta nuevamente." 
         });
@@ -39,6 +43,26 @@ export default function ValidandoCredencialesScreen({ navigation, route }) {
 
     validarCredenciales();
   }, [navigation, usuario, password]);
+
+  if (!usuario || !password) {
+    return (
+      <Modal transparent={true} animationType="fade" statusBarTranslucent={true}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.overlay}>
+            <View style={styles.content}>
+              <Text style={styles.errorText}>Error: Datos incompletos</Text>
+              <Pressable 
+                style={styles.retryButton}
+                onPress={() => navigation.replace("Login")}
+              >
+                <Text style={styles.retryButtonText}>Volver al Login</Text>
+              </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+    );
+  }
 
   return (
     <Modal
@@ -49,12 +73,10 @@ export default function ValidandoCredencialesScreen({ navigation, route }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.overlay}>
           <View style={styles.content}>
-
-
             <Image
-                source={require("../assets/iconos/Logo_Cerdo.png")}
-                style={styles.headerImage}
-                resizeMode="contain" 
+              source={require("../assets/iconos/Logo_Cerdo.png")}
+              style={styles.headerImage}
+              resizeMode="contain" 
             />
             <ActivityIndicator 
               size="large" 
@@ -65,7 +87,7 @@ export default function ValidandoCredencialesScreen({ navigation, route }) {
             <Text style={styles.subtitle}>Por favor espera...</Text>
             
             <View style={styles.userContainer}>
-              <Text style={styles.userText}>{usuario}</Text>
+              <Text style={styles.userText}>Usuario: {usuario}</Text>
             </View>
 
           </View>
@@ -91,7 +113,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     minWidth: 280,
-    // Sombra suave
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
@@ -124,9 +145,26 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     opacity: 0.9,
   },
-   headerImage: {
+  headerImage: {
     width: 90,
     height: 90,
     marginBottom: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: "#FF6B6B",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#03A9F4",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

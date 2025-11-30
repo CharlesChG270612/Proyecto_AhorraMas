@@ -71,7 +71,6 @@ class Presupuesto {
     try {
       console.log('DEBUG Presupuesto.establecerPresupuestoMensual:', { usuarioId, monto, mes, año });
       
-      // Usar AsyncStorage directamente para presupuesto mensual
       const presupuestoMensual = {
         id: `${usuarioId}_${mes}_${año}`,
         usuario_id: parseInt(usuarioId),
@@ -151,7 +150,6 @@ class Presupuesto {
       
       let totalGastos = 0;
       resultado.forEach(item => {
-        // Filtrar por mes y año manualmente
         if (item.fecha) {
           const fechaItem = new Date(item.fecha);
           if (fechaItem.getMonth() + 1 === mes && fechaItem.getFullYear() === año) {

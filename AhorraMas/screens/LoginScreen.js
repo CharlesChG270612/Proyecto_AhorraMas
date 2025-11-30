@@ -31,10 +31,15 @@ export default function LoginScreen({ navigation, route }) {
       setCargando(false);
 
       if (resultado.exito) {
-        Alert.alert("Éxito", resultado.mensaje);
         navigation.reset({
           index: 0,
-          routes: [{ name: "Tabs" }],
+          routes: [{ 
+            name: "ValidandoCredenciales",
+            params: {
+              usuario: usuario.trim(),
+              password: password.trim()
+            }
+          }],
         });
       } else {
         Alert.alert("Error", resultado.mensaje);

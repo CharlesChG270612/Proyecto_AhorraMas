@@ -9,7 +9,6 @@ class BaseDeDatos {
     this.prefix = 'ahorraplus_';
     this.inicializada = false;
     
-    // Verificar si SQLite está disponible
     this.sqliteDisponible = typeof SQLite.openDatabase === 'function';
     console.log('DEBUG: SQLite disponible:', this.sqliteDisponible);
     
@@ -45,7 +44,6 @@ class BaseDeDatos {
 
       this.db.transaction(
         tx => {
-          // Tabla de usuarios
           tx.executeSql(
             `CREATE TABLE IF NOT EXISTS usuarios (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,7 +54,6 @@ class BaseDeDatos {
             );`
           );
 
-          // Tabla de tokens de recuperación
           tx.executeSql(
             `CREATE TABLE IF NOT EXISTS tokens_recuperacion (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,7 +65,6 @@ class BaseDeDatos {
             );`
           );
 
-          // Tabla de transacciones
           tx.executeSql(
             `CREATE TABLE IF NOT EXISTS transacciones (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +80,6 @@ class BaseDeDatos {
             );`
           );
 
-          // Tabla de presupuestos
           tx.executeSql(
             `CREATE TABLE IF NOT EXISTS presupuestos (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,7 +94,6 @@ class BaseDeDatos {
             );`
           );
 
-          // Tabla de presupuesto mensual
           tx.executeSql(
             `CREATE TABLE IF NOT EXISTS presupuesto_mensual (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -127,18 +121,15 @@ class BaseDeDatos {
   }
 
   async ejecutarConsulta(sql, parametros = []) {
-    // Si no está inicializada y debería usar SQLite, esperar
     if (!this.inicializada && this.sqliteDisponible) {
       console.log('DEBUG: Esperando inicialización de BD...');
       await this.inicializar();
     }
 
-    // Si es web o SQLite no está disponible, usar AsyncStorage
     if (this.esWeb || !this.sqliteDisponible) {
       return this.ejecutarConsultaWeb(sql, parametros);
     }
 
-    // Usar SQLite real
     return new Promise((resolver, rechazar) => {
       if (!this.db) {
         rechazar(new Error('Base de datos no disponible'));
@@ -177,7 +168,6 @@ class BaseDeDatos {
       return this.eliminarWeb(sql, parametros);
     }
     
-    // Para otras operaciones, retornar resultado simulado
     return { 
       rows: { 
         length: 0, 
@@ -225,7 +215,6 @@ class BaseDeDatos {
           datos._tabla = tabla;
           datos._clave = key;
           
-          // Asegurar que tenga ID
           if (!datos.id) {
             const idMatch = key.match(/_(\d+)$/);
             if (idMatch) {
@@ -242,14 +231,12 @@ class BaseDeDatos {
         }
       }).filter(Boolean);
 
-      // Filtrar por tabla
       const tablaMatch = sql.match(/FROM\s+(\w+)/i);
       if (tablaMatch) {
         const tablaBuscada = tablaMatch[1];
         resultados = resultados.filter(item => item._tabla === tablaBuscada);
       }
 
-      // Aplicar condiciones WHERE
       const whereMatch = sql.match(/WHERE\s+(.+?)(?:\s*ORDER BY|\s*LIMIT|$)/i);
       if (whereMatch && parametros.length > 0) {
         const whereCondition = whereMatch[1].toLowerCase();
@@ -273,38 +260,32 @@ class BaseDeDatos {
 
   aplicarCondicionesWhere(resultados, whereCondition, parametros) {
     return resultados.filter(item => {
-      // usuario_id = ?
       if (whereCondition.includes('usuario_id = ?')) {
         const index = whereCondition.split('?').indexOf('') - 1;
         return item.usuario_id && item.usuario_id.toString() === parametros[index]?.toString();
       }
       
-      // mes = ? AND año = ?
       if (whereCondition.includes('mes = ?') && whereCondition.includes('año = ?')) {
         const mesIndex = whereCondition.split('?').indexOf('') - 1;
         const añoIndex = mesIndex + 1;
         return item.mes === parametros[mesIndex] && item.año === parametros[añoIndex];
       }
       
-      // tipo = ?
       if (whereCondition.includes('tipo = ?')) {
         const index = whereCondition.split('?').indexOf('') - 1;
         return item.tipo === parametros[index];
       }
       
-      // categoria = ?
       if (whereCondition.includes('categoria = ?')) {
         const index = whereCondition.split('?').indexOf('') - 1;
         return item.categoria === parametros[index];
       }
       
-      // fecha = ?
       if (whereCondition.includes('fecha = ?')) {
         const index = whereCondition.split('?').indexOf('') - 1;
         return item.fecha === parametros[index];
       }
       
-      // usuario = ? o correo = ?
       if (whereCondition.includes('usuario = ?')) {
         return item.usuario === parametros[0];
       }
@@ -312,7 +293,6 @@ class BaseDeDatos {
         return item.correo === parametros[0];
       }
       
-      // id = ?
       if (whereCondition.includes('id = ?')) {
         return item.id === parametros[0]?.toString();
       }
@@ -418,7 +398,6 @@ class BaseDeDatos {
       }
     });
     
-    // Convertir tipos numéricos
     if (datos.usuario_id) datos.usuario_id = parseInt(datos.usuario_id) || 0;
     if (datos.monto) datos.monto = parseFloat(datos.monto) || 0;
     if (datos.mes) datos.mes = parseInt(datos.mes) || 0;
@@ -500,7 +479,6 @@ class BaseDeDatos {
     return true;
   }
 
-  // Método para obtener el tipo de base de datos actual
   obtenerTipoBD() {
     return this.sqliteDisponible ? 'SQLite' : 'AsyncStorage';
   }

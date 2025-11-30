@@ -133,7 +133,6 @@ class ControladorPresupuestos {
     } catch (error) {
       console.error('DEBUG ControladorPresupuestos.obtenerResumenMensual - error:', error);
       
-      // Si hay error, retornar datos por defecto
       return {
         exito: true,
         datos: {

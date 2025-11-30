@@ -1,25 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  SafeAreaView,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-  ActivityIndicator,
-  RefreshControl
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView,TouchableOpacity,Image,Dimensions,ActivityIndicator,RefreshControl} from 'react-native';
 import { Svg, Circle, Path, G } from 'react-native-svg';
 import ControladorTransacciones from '../controllers/ControladorTransacciones';
 import ControladorAutenticacion from '../controllers/ControladorAutenticacion';
 
 const screenWidth = Dimensions.get("window").width;
 
-// Componente de gráfica de barras personalizado MEJORADO
 const GraficaBarras = ({ datos, altura = 200, colores = [] }) => {
-  // Si no hay datos válidos, mostrar mensaje
   if (!datos || !datos.datasets || !datos.datasets[0] || datos.datasets[0].data.length === 0) {
     return (
       <View style={[styles.graficaContainer, { height: altura, justifyContent: 'center', alignItems: 'center' }]}>
@@ -32,7 +19,6 @@ const GraficaBarras = ({ datos, altura = 200, colores = [] }) => {
   
   return (
     <View style={[styles.graficaContainer, { height: altura }]}>
-      {/* Líneas de fondo y valores */}
       <View style={styles.ejeY}>
         {[100, 75, 50, 25, 0].map((valor, index) => (
           <View key={index} style={styles.lineaContainer}>
@@ -42,7 +28,6 @@ const GraficaBarras = ({ datos, altura = 200, colores = [] }) => {
         ))}
       </View>
       
-      {/* Barras */}
       <View style={styles.barrasContainer}>
         {datos.datasets[0].data.map((valor, index) => {
           const alturaBarra = (valor / maxValor) * (altura - 60);
@@ -69,9 +54,7 @@ const GraficaBarras = ({ datos, altura = 200, colores = [] }) => {
   );
 };
 
-// Componente de gráfica circular personalizado
 const GraficaCircular = ({ datos }) => {
-  // Si no hay datos válidos, mostrar mensaje
   if (!datos || datos.length === 0 || (datos.length === 1 && datos[0].name === 'Sin datos')) {
     return (
       <View style={[styles.graficaCircularContainer, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -123,7 +106,6 @@ const GraficaPastel = ({ datos, titulo }) => {
   const radius = 80;
   const center = size / 2;
 
-  // Función para calcular coordenadas polares
   const polarToCartesian = (angle) => {
     const rad = (angle - 90) * Math.PI / 180;
     return {
@@ -132,7 +114,6 @@ const GraficaPastel = ({ datos, titulo }) => {
     };
   };
 
-  // Función para crear el path de cada segmento
   const createSlice = (startAngle, endAngle) => {
     const start = polarToCartesian(startAngle);
     const end = polarToCartesian(endAngle);
@@ -146,7 +127,6 @@ const GraficaPastel = ({ datos, titulo }) => {
     ].join(" ");
   };
 
-  // Calcular segmentos
   const calculateSlices = () => {
     let currentAngle = 0;
     return datos.map((item, index) => {
@@ -166,7 +146,6 @@ const GraficaPastel = ({ datos, titulo }) => {
 
   const slices = calculateSlices();
 
-  // Calcular posición de etiquetas
   const getLabelPosition = (slice) => {
     const midAngle = (slice.startAngle + slice.endAngle) / 2;
     const labelRadius = radius * 0.7;
@@ -196,7 +175,6 @@ const GraficaPastel = ({ datos, titulo }) => {
             ))}
           </G>
           
-          {/* Etiquetas de porcentaje */}
           {slices.map((slice, index) => {
             if (slice.percentage > 5) {
               const pos = getLabelPosition(slice);
@@ -218,7 +196,6 @@ const GraficaPastel = ({ datos, titulo }) => {
             return null;
           })}
 
-          {/* Círculo central */}
           <Circle cx={center} cy={center} r={radius * 0.3} fill="#fff" />
           <Text
             x={center}
@@ -244,7 +221,6 @@ const GraficaPastel = ({ datos, titulo }) => {
         </Svg>
       </View>
 
-      {/* Leyenda */}
       <View style={styles.leyendaPastel}>
         {datos.map((item, index) => (
           <View key={index} style={styles.itemLeyendaPastel}>
@@ -267,7 +243,6 @@ const GraficaPastel = ({ datos, titulo }) => {
   );
 };
 
-// Componente del menú desplegable para seleccionar tipo de gráfica
 const MenuTipoGrafica = ({ tipoSeleccionado, onSeleccionar }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -334,7 +309,6 @@ export default function Interfaz_Grafica({ navigation }) {
   });
   const [usuario, setUsuario] = useState(null);
 
-  // Obtener el usuario logueado usando el mismo método que el historial
   useEffect(() => {
     verificarYcargarUsuario();
   }, []);
@@ -353,7 +327,6 @@ export default function Interfaz_Grafica({ navigation }) {
       }
       
       setUsuario(usuarioActual);
-      // Cargar datos inmediatamente después de obtener el usuario
       cargarDatos(usuarioActual.id);
     } catch (error) {
       console.error('Error obteniendo usuario:', error);
@@ -361,7 +334,6 @@ export default function Interfaz_Grafica({ navigation }) {
     }
   };
 
-  // Configurar listener para cuando se agreguen nuevas transacciones
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       console.log('DEBUG: Pantalla enfocada, recargando datos...');
@@ -375,7 +347,6 @@ export default function Interfaz_Grafica({ navigation }) {
     return unsubscribe;
   }, [navigation, usuario]);
 
-  // Cargar datos cuando cambie el periodo o tipo
   useEffect(() => {
     if (datosMovimientos.length > 0) {
       calcularEstadisticas();
@@ -475,7 +446,6 @@ export default function Interfaz_Grafica({ navigation }) {
 
     console.log('DEBUG: Transacciones para gráfica:', transaccionesTipo.length);
 
-    // Agrupar por categoría
     const categoriasMap = {};
     transaccionesTipo.forEach(transaccion => {
       if (!transaccion.categoria) return;
@@ -491,7 +461,6 @@ export default function Interfaz_Grafica({ navigation }) {
 
     console.log('DEBUG: Datos agrupados - Categorías:', categorias, 'Montos:', montos);
 
-    // Si no hay datos, usar valores por defecto
     if (categorias.length === 0) {
       return {
         labels: ['Sin datos'],
@@ -511,7 +480,6 @@ export default function Interfaz_Grafica({ navigation }) {
       tipo === 'ingresos' ? t.tipo === 'ingreso' : t.tipo === 'gasto'
     );
 
-    // Agrupar por categoría
     const categoriasMap = {};
     transaccionesTipo.forEach(transaccion => {
       if (!transaccion.categoria) return;
@@ -527,7 +495,6 @@ export default function Interfaz_Grafica({ navigation }) {
 
     console.log('DEBUG: Datos para gráfica circular:', categorias);
 
-    // Si no hay datos, usar valores por defecto
     if (categorias.length === 0) {
       return [
         { name: 'Sin datos', population: 1, color: '#CCCCCC' }
@@ -611,7 +578,6 @@ export default function Interfaz_Grafica({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header con flecha de regreso */}
       <View style={styles.header}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()} 
@@ -639,7 +605,6 @@ export default function Interfaz_Grafica({ navigation }) {
         }
       >
         
-        {/* Selector de Tipo (Ingresos/Egresos) */}
         <View style={styles.tipoContainer}>
           <TouchableOpacity 
             style={[styles.tipoBoton, tipo === 'ingresos' && styles.tipoBotonActivo]}
@@ -660,13 +625,11 @@ export default function Interfaz_Grafica({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Menú desplegable para seleccionar tipo de gráfica */}
         <MenuTipoGrafica 
           tipoSeleccionado={tipoGrafica}
           onSeleccionar={setTipoGrafica}
         />
 
-        {/* Selector de Periodo */}
         <View style={styles.periodoContainer}>
           <TouchableOpacity 
             style={[styles.periodoBoton, periodo === 'dia' && styles.periodoBotonActivo]}
@@ -696,7 +659,6 @@ export default function Interfaz_Grafica({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Resumen Financiero */}
         <View style={styles.moneyRow}>
           <View style={styles.moneyCard}>
             <Text style={styles.sectionTitle}>Total de {titulo}</Text>
@@ -713,7 +675,6 @@ export default function Interfaz_Grafica({ navigation }) {
           </View>
         </View>
 
-        {/* Gráfica Principal */}
         <View style={styles.chartCard}>
           <Text style={styles.sectionTitle}>
             {tipoGrafica === 'barras' 
@@ -725,7 +686,6 @@ export default function Interfaz_Grafica({ navigation }) {
           {renderGraficaPrincipal()}
         </View>
 
-        {/* Gráfica de Categorías (solo se muestra si la principal es de barras) */}
         {tipoGrafica === 'barras' && (
           <View style={styles.chartCard}>
             <Text style={styles.sectionTitle}>
@@ -735,7 +695,6 @@ export default function Interfaz_Grafica({ navigation }) {
           </View>
         )}
 
-        {/* Estadísticas Detalladas */}
         <View style={styles.statsContainer}>
           <Text style={styles.sectionTitle}>Estadísticas Detalladas</Text>
           
@@ -776,7 +735,6 @@ export default function Interfaz_Grafica({ navigation }) {
   );
 }
 
-// Los estilos se mantienen igual que en el código anterior
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -838,7 +796,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 30,
   },
-  // Selector de Tipo
   tipoContainer: {
     flexDirection: 'row',
     backgroundColor: '#f8f9fa',
@@ -869,7 +826,6 @@ const styles = StyleSheet.create({
   tipoTextoActivo: {
     fontWeight: '700',
   },
-  // Menú desplegable para tipo de gráfica
   menuContainer: {
     width: '100%',
     marginBottom: 15,
@@ -935,7 +891,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#4A90E2',
   },
-  // Selector de Periodo
   periodoContainer: {
     flexDirection: 'row',
     backgroundColor: '#f8f9fa',
@@ -1016,7 +971,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  // Estilos para gráficas personalizadas
   graficaContainer: {
     width: '100%',
     flexDirection: 'row',
@@ -1074,7 +1028,6 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 10,
   },
-  // NUEVOS ESTILOS PARA GRAFICA PASTEL CON SVG
   graficaPastelContainer: {
     width: '100%',
     alignItems: 'center',

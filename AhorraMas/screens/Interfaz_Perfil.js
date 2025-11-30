@@ -15,11 +15,9 @@ export default function Interfaz_Perfil({ navigation, route }) {
     try {
       setCargando(true);
       
-      // Obtener el usuario actual de AsyncStorage
       const usuarioActual = await ControladorAutenticacion.obtenerUsuarioActual();
       
       if (usuarioActual && usuarioActual.id) {
-        // Buscar información completa del usuario en la base de datos
         const usuarioCompleto = await Usuario.buscarPorId(usuarioActual.id);
         
         if (usuarioCompleto) {
@@ -29,7 +27,6 @@ export default function Interfaz_Perfil({ navigation, route }) {
             userId: `ID-${usuarioCompleto.id.toString().padStart(4, '0')}`
           });
         } else {
-          // Si no encuentra en BD, usar datos de AsyncStorage
           setUsuarioData({
             nombre: usuarioActual.usuario || "Usuario",
             email: usuarioActual.correo || "No especificado",
@@ -37,7 +34,6 @@ export default function Interfaz_Perfil({ navigation, route }) {
           });
         }
       } else {
-        // Datos por defecto si no hay usuario logueado
         setUsuarioData({
           nombre: "Invitado",
           email: "No has iniciado sesión",
@@ -52,13 +48,11 @@ export default function Interfaz_Perfil({ navigation, route }) {
     }
   };
 
-  // Función para obtener la inicial del nombre
   const obtenerInicial = (nombre) => {
     if (!nombre || nombre === "Invitado") return "?";
     return nombre.charAt(0).toUpperCase();
   };
 
-  // Función para generar color basado en el nombre (consistente)
   const generarColor = (nombre) => {
     if (!nombre) return "#03A9F4";
     
@@ -78,22 +72,20 @@ export default function Interfaz_Perfil({ navigation, route }) {
 
   const eliminarCuenta = () => {
     Alert.alert(
-      "Eliminar cuenta",
-      "¿Seguro que deseas eliminar tu cuenta? Esta acción no se puede deshacer.",
+      "Cerrar sesión",
+      "¿Seguro que deseas cerrar sesión con tu cuenta?",
       [
         { text: "Cancelar", style: "cancel" },
         {
-          text: "Sí, eliminar",
+          text: "Sí, cerrar sesión",
           style: "destructive",
           onPress: async () => {
             try {
               const usuarioActual = await ControladorAutenticacion.obtenerUsuarioActual();
               if (usuarioActual && usuarioActual.id) {
-                // Aquí podrías agregar la lógica para eliminar el usuario de la base de datos
-                // await Usuario.eliminarUsuario(usuarioActual.id);
+
               }
               
-              // Cerrar sesión y redirigir al login
               await ControladorAutenticacion.cerrarSesion();
               navigation.reset({
                 index: 0,
@@ -123,7 +115,6 @@ export default function Interfaz_Perfil({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        {/* Círculo con la inicial del usuario */}
         <View style={[
           styles.avatarCircle,
           { backgroundColor: generarColor(usuarioData?.nombre) }
@@ -150,7 +141,7 @@ export default function Interfaz_Perfil({ navigation, route }) {
         </View>
 
         <Pressable style={styles.deleteButton} onPress={eliminarCuenta}>
-          <Text style={styles.deleteText}>Eliminar cuenta</Text>
+          <Text style={styles.deleteText}>Cerrar sesión</Text>
         </Pressable>
       </View>
     </View>
@@ -174,7 +165,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 4,
   },
-  // Nuevos estilos para el círculo del avatar
   avatarCircle: {
     width: 90,
     height: 90,
@@ -193,13 +183,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "bold",
   },
-  // Eliminar el estilo de avatar anterior
-  // avatar: {
-  //   width: 90,
-  //   height: 90,
-  //   borderRadius: 45,
-  //   marginBottom: 16,
-  // },
   name: {
     fontSize: 22,
     fontWeight: "bold",
